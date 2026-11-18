@@ -1,0 +1,31 @@
+
+# Data handling and processing
+pandas
+numpy
+openpyxl
+pyarrow
+
+# Machine learning and preprocessing
+scikit-learn
+imbalanced-learn
+joblib
+
+# Data visualization and analysis
+matplotlib
+seaborn
+
+# Explainable AI
+shap
+
+# API development
+fastapi
+uvicorn[standard]
+pydantic
+
+# Testing
+pytest
+httpx
+
+# Notebook support
+jupyter
+ipykernel
