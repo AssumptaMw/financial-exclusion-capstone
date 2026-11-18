@@ -1,0 +1,9 @@
+-r requirements.txt
+
+# Tests, notebooks, and analysis
+pytest
+httpx
+matplotlib
+seaborn
+jupyter
+ipykernel

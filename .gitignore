@@ -2,10 +2,17 @@
 # Python
 __pycache__/
 *.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
 
 # Virtual environments
 .venv/
 venv/
+env/
 
 # Jupyter
 .ipynb_checkpoints/
@@ -21,13 +28,28 @@ data/interim/*
 data/processed/*
 !data/processed/.gitkeep
 
+# Generated artifacts and reports
+artifacts/*
+!artifacts/.gitkeep
+reports/figures/*
+!reports/figures/.gitkeep
+reports/results/*
+!reports/results/.gitkeep
+
 # Environment variables
 .env
 .env.*
+!.env.example
+secrets/
+.secrets/
+*.pem
+*.key
 
 # Generated temporary files
 *.log
 *.tmp
+*.temp
+*.swp
 
 # OS files
 .DS_Store

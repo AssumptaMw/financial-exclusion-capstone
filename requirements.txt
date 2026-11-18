@@ -1,31 +1,18 @@
 
-# Data handling and processing
+# Runtime dependencies
 pandas
 numpy
 openpyxl
 pyarrow
 
-# Machine learning and preprocessing
+# Modeling and model persistence
 scikit-learn
-imbalanced-learn
 joblib
 
-# Data visualization and analysis
-matplotlib
-seaborn
-
-# Explainable AI
+# Explainability
 shap
 
-# API development
+# API
 fastapi
 uvicorn[standard]
 pydantic
-
-# Testing
-pytest
-httpx
-
-# Notebook support
-jupyter
-ipykernel
