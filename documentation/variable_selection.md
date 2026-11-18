@@ -76,6 +76,14 @@ the same construct.
 | Non-financial digital access | `S1`, `S2__1`, `S3`, optionally `S4` | The questionnaire asks about mobile-phone/tablet ownership and use (`S1`), phone internet capability (`S2__1`), general internet-use frequency (`S3`), and the main place/device for recent internet use (`S4`). These are candidates as general digital-access context, not as measures of financial-service use. Check skip patterns and special codes. |
 | Functional difficulty | `A24i`–`A24vi` | The questionnaire asks about difficulty seeing, hearing, walking/climbing, remembering/concentrating, self-care, and communication. The group is approved for consideration; any combined disability indicator still requires a documented rule based on verified response categories. |
 
+For the interim extraction, the researcher confirmed the
+`2024_Finaccess_Publicdata` sheet, `A18` and `A20` rather than their derived
+alternatives, and inclusion of `S4`. Retain `Access_fnl` and
+`Overall_Access_fnl` as outcome/cross-check fields, plus `indWeight` and `A07`
+as candidate design fields; none is a predictor. Extract all source records
+without applying the 18+ restriction at this stage. The remaining exact fields
+are the approved candidates listed in the table above.
+
 ### Not included in the approved shortlist
 
 `Quintiles` is labeled in the workbook and the report analyzes wealth quintiles,

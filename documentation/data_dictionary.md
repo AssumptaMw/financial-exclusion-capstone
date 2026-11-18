@@ -21,6 +21,7 @@ and no model has been implemented.
 | `Sex` | Sex of selected individual. | Check workbook value labels before use. | Candidate individual-level demographic predictor. | Keep distinct from `A13`, which is sex of the household head. | Workbook `Variables` and `Values` sheets. | Label verified; mapping and categories pending. |
 | `A20` | Highest level of formal education completed. | 1 None; 2 Some primary; 3 Primary completed; 4 Some secondary; 5 Secondary completed; 6 Some technical training; 7 Completed technical training; 8 Some university; 9 University completed; 10 Other; 98 Don't Know; 99 Refused. | Candidate socioeconomic predictor. | None approved. | CBK questionnaire, Section A, p. 7; workbook `Variables` and `Values` sheets; CBK 2024 report, pp. 14–16. | Wording and questionnaire categories verified. |
 | `Education` | Education level of respondent. | Check workbook value labels before use. | Candidate socioeconomic predictor; may duplicate `A20`. | Use one verified representation. | Workbook `Variables` and `Values` sheets. | Label verified; mapping and categories pending. |
+| `A24i`, `A24ii`, `A24iii`, `A24iv`, `A24v`, `A24vi` | Self-reported difficulty with seeing, hearing, walking/climbing, cognition, self-care, and communication, respectively. | Questionnaire: 1 No difficulty; 2 Some difficulty; 3 A lot of difficulty; 4 Cannot do at all; 98 Don't Know; 99 Refused. Check workbook representations. | Candidate functional-difficulty predictors. | No combined indicator or response recoding approved. | CBK questionnaire, Section A, p. 8; workbook `Variables` and `Values` sheets. | Questionnaire wording and codes verified; workbook coding pending. |
 | `county` | County. | Check workbook value labels. | Candidate geographic predictor. | None approved; do not use finer location identifiers as predictors. | Workbook `Variables` and `Values` sheets; CBK 2024 report, pp. 3, 14–16. | Label verified; category review pending. |
 | `A08` | Cluster type. | 1 Rural; 2 Urban. | Candidate geographic predictor; not a stratum identifier. | None approved. | CBK questionnaire, Section A, p. 3; workbook `Variables` and `Values` sheets. | Meaning and questionnaire codes verified. |
 | `B3A__2` | B3A income source: Employed. The question asks how the respondent got money in the past 12 months. | Category 2; 98 Don't Know; 99 Refused. Verify workbook representation. | Candidate livelihood predictor. | Treat as an income-source indicator, not necessarily current employment status. | CBK questionnaire, B3A livelihood sources, p. 15; workbook `Variables` and `Values` sheets. | Wording and questionnaire category verified; workbook coding pending. |
@@ -51,3 +52,11 @@ the exact workbook columns remain as listed in the variable inventory. The
 workbook's `Values` sheet contains variable-specific labels such as Don't Know,
 Refused, Not Stated, and Not Applicable. Do not apply a global numeric
 missing-code rule; consult the field's label set and questionnaire routing.
+
+The respondent worksheet stores some labeled fields as text rather than numeric
+codes: sampled `Access_fnl` cells contain labels such as `Excluded` and
+`Formal Prudential`. The extraction preserves the worksheet representation; the
+approved numeric code definition must not be applied directly to these text
+cells. Some cells contain Excel errors such as `#NULL!`. Extraction preserves
+those tokens and records their counts; it does not interpret them as missing or
+as substantive answers.
