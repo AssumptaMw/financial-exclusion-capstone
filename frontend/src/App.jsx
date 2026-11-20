@@ -50,6 +50,59 @@ function Field({ field, value, error, onChange, incomeMissing, onIncomeMissing }
   );
 }
 
+function ExplanationSection({ explanation }) {
+  if (!explanation) return null;
+
+  if (!explanation.success) {
+    return (
+      <div className="explanation-section">
+        <h3>Understanding your prediction</h3>
+        <p className="explanation-note">
+          <strong>Explanation unavailable.</strong> The prediction was computed successfully, but the detailed explanation could not be generated at this time.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="explanation-section">
+      <h3>Understanding your prediction</h3>
+      <p className="explanation-intro">
+        The most influential characteristics contributing to this prediction are shown below. 
+        Positive contributions push the prediction towards "Excluded"; negative contributions push towards "Included".
+      </p>
+      {explanation.contributors && explanation.contributors.length > 0 ? (
+        <div className="contributors-list">
+          {explanation.contributors.map((contrib, idx) => (
+            <div key={idx} className="contributor-item">
+              <div className="contributor-header">
+                <span className="contributor-name">{contrib.variable}</span>
+                <span className={`contributor-direction ${contrib.direction.replace(' ', '-')}`}>
+                  {contrib.direction}
+                </span>
+              </div>
+              <div className="contributor-bar">
+                <div
+                  className={`contributor-bar-fill ${contrib.shap_value > 0 ? 'positive' : 'negative'}`}
+                  style={{ width: `${Math.min(100, Math.abs(contrib.shap_value) * 50)}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="explanation-note">No significant contributors identified.</p>
+      )}
+      <div className="explanation-disclaimer">
+        <p>
+          <strong>Important:</strong> These explanations describe which characteristics the model found influential, not the causes of financial exclusion.
+          They reflect patterns in the training data and the model's learned behavior, not causal relationships.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function Results({ result, loading, resultRef }) {
   const excluded = result?.financial_exclusion_status === 1;
   return (
@@ -64,6 +117,7 @@ function Results({ result, loading, resultRef }) {
         <>
           <div className="result-label">{excluded ? 'Financially Excluded' : 'Financially Included'}</div>
           <p>The model’s predicted classification for the responses provided.</p>
+          <ExplanationSection explanation={result.explanation} />
         </>
       ) : (
         <p>{loading ? 'The model is processing your responses.' : 'Complete the form to see the model’s predicted classification.'}</p>

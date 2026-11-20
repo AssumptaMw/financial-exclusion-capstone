@@ -101,6 +101,24 @@ h1, h2, h3, h4, p { margin-top: 0; }
 .result-excluded .result-icon { color: #8b4822; background: #fff1e2; }
 .result-note { border-top: 1px solid #e6ece8; padding-top: 17px; margin-top: 18px; color: #637a72; font-size: 11px; line-height: 1.6; }
 .result-note strong { display: block; color: #39574e; margin-bottom: 4px; }
+
+/* Explanation section styling */
+.explanation-section { margin-top: 24px; padding-top: 20px; border-top: 1px solid #e8eeea; }
+.explanation-section h3 { font-size: 14px; font-weight: 700; margin-bottom: 10px; color: #172f36; }
+.explanation-intro { font-size: 12px; color: #617870; line-height: 1.6; margin-bottom: 16px; }
+.explanation-note { font-size: 12px; color: #708579; font-style: italic; }
+.contributors-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 16px; }
+.contributor-item { display: flex; flex-direction: column; gap: 6px; }
+.contributor-header { display: flex; justify-content: space-between; align-items: center; }
+.contributor-name { font-size: 11px; font-weight: 700; color: #445e57; background: #f0f4f1; padding: 4px 8px; border-radius: 3px; font-family: "Courier New", monospace; }
+.contributor-direction { font-size: 10px; font-weight: 600; padding: 3px 7px; border-radius: 3px; }
+.contributor-direction.towards-excluded { color: #8b5522; background: #fce8d4; }
+.contributor-direction.towards-included { color: #247a68; background: #d4f0e8; }
+.contributor-bar { height: 4px; background: #e8eeea; border-radius: 2px; overflow: hidden; }
+.contributor-bar-fill { height: 100%; background: #176f65; }
+.contributor-bar-fill.negative { background: #5b8f82; }
+.explanation-disclaimer { background: #f5f9f7; border: 1px solid #e0e8e3; border-radius: 5px; padding: 12px; margin-top: 12px; }
+.explanation-disclaimer p { font-size: 11px; line-height: 1.6; color: #617870; margin: 0; }
 .about-card .eyebrow { margin-bottom: 15px; }
 .about-card > p { margin-bottom: 0; }
 .about-divider { height: 1px; background: #e6ece8; margin: 20px 0; }

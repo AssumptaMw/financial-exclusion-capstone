@@ -20,7 +20,10 @@ const difficulty = [
 ];
 
 const sourceToken = option('Source token #NULL! (meaning unresolved)', '#NULL!');
-const indicator = [option('Indicator 0', '0'), option('Indicator 1', '1')];
+const incomeIndicator = [
+  option('Not an income source', '0'),
+  option('Is an income source', '1'),
+];
 
 export const sections = [
   {
@@ -57,8 +60,8 @@ export const sections = [
     title: 'Livelihood & identification',
     description: 'Income sources refer to the past 12 months.',
     fields: [
-      { name: 'B3A__2', label: 'Employed income-source indicator', options: indicator, hint: 'Select the original workbook indicator (0 or 1).' },
-      { name: 'B3A__4', label: 'Own business income-source indicator', options: indicator, hint: 'Select the original workbook indicator (0 or 1).' },
+      { name: 'B3A__2', label: 'Employed income-source indicator', options: incomeIndicator, hint: 'Whether income was received from employment in the past 12 months (0=No, 1=Yes).' },
+      { name: 'B3A__4', label: 'Own business income-source indicator', options: incomeIndicator, hint: 'Whether income was received from running own business/self-employment in the past 12 months (0=No, 1=Yes).' },
       { name: 'B3Ii', label: 'Total income last month', type: 'income', hint: 'In Kenyan shillings. Codes 98 and 99 are treated as missing by the model.' },
       { name: 'ID_card', label: 'Identification document', options: [
         option('Has ID (national ID, passport or alien ID)', 'Has ID (National Identity Card (ID),Passport,Alien ID)'),

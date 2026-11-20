@@ -69,5 +69,23 @@ class PredictionOutput(BaseModel):
     label: Literal["Financially included", "Financially excluded"]
 
 
+class ContributorExplanation(BaseModel):
+    """A single contributor to the prediction."""
+
+    variable: str
+    label: str
+    shap_value: float
+    direction: Literal["towards excluded", "towards included"]
+
+
+class PredictionWithExplanation(PredictionOutput):
+    """Extended prediction with SHAP explanation."""
+
+    explanation: dict[str, object] | None = Field(
+        description="SHAP explanation; null if computation failed or was disabled."
+    )
+
+
 class BatchPredictionOutput(BaseModel):
     predictions: list[PredictionOutput]
+

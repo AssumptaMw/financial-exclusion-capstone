@@ -48,7 +48,7 @@ describe('prediction form', () => {
     expect(await screen.findByText('Financially Excluded')).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Prediction result' })).toHaveFocus();
     const [url, options] = fetch.mock.calls[0];
-    expect(url).toBe('/api/predict');
+    expect(url).toBe('/api/predict/with-explanation');
     expect(options.method).toBe('POST');
     const payload = JSON.parse(options.body);
     expect(Object.keys(payload)).toEqual(fields.map((field) => field.name));
