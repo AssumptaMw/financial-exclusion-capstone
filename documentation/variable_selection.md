@@ -2,10 +2,11 @@
 
 ## Status
 
-The researcher approved the target, 18+ analysis population, and candidate
-predictor groups documented here. Exact field-level processing remains subject
-to the verification caveats below. No target has been constructed, no
-observations have been filtered, and no model has been implemented.
+The researcher approved the 18+ analysis population and predictor groups.
+Prompt 6B supersedes the earlier target choice: `financial_exclusion_status`
+is mapped from the exact observed labels in `Overall_Access_fnl`. The adult
+population and modeling dataset have been prepared, but no model has been fit.
+The provider's original classification methodology remains unverified.
 
 ## Official definition and approved outcome
 
@@ -19,19 +20,19 @@ or product as excluded (CBK, 2024, pp. 8–9, Table 1.3).
 | Item | Approved specification | Evidence and limitation |
 |---|---|---|
 | Unit and population | Selected individuals aged 18 years or older. | Approved by the researcher. The survey sampled an eligible person aged 16+ per household, but the report says its analysis is for ages 18+ (CBK, 2024, p. 3). Record and report any under-18 exclusions. |
-| Primary outcome | Use the workbook's precomputed `Access_fnl` classification: positive/excluded = code 5; negative/not excluded = codes 1–4. Preserve missing or unrecognized codes as unlabeled, not as either class. | Approved by the researcher. The workbook's `Values` sheet labels codes 1–5 as Formal Prudential, Formal Non-Prudential, Formal Registered, Informal, and Excluded. These categories align with the report's classification. The derivation formula/input crosswalk is unavailable; use the precomputed field as supplied and do not recreate it from guessed items. |
-| Cross-check | Compare the primary classification with `Overall_Access_fnl`, whose workbook labels are 1 Formal only, 2 Informal only, and 3 Excluded. | Treat it as a validation cross-check, not a second outcome or predictor. The relationship between the two fields remains unverified. |
+| Primary outcome | `financial_exclusion_status` is constructed from exact `Overall_Access_fnl` labels: `formal only` = 0 (financially included); `informal only` = 0 (financially included); `excluded` = 1 (financially excluded). | Approved by the researcher in Prompt 6B. The mapping is a project rule over the verified observed labels, not an independent verification or reconstruction of the provider's classification methodology. Unexpected or missing labels are rejected and reported, not guessed or dropped. |
+| Traceability | Preserve both `Overall_Access_fnl` and `Access_fnl` in the modeling dataset. | `Overall_Access_fnl` is the sole binary-target source; `Access_fnl` is retained for traceability only. Do not combine or cross-map the two in target construction. |
 | Reference and interpretation | A cross-sectional classification of financial access/use in the 2024 survey, not a forecast of future exclusion. | The survey is cross-sectional. C1 combines “currently have/use,” “used to have/use,” and “never had/used”; C2 asks about use in the last 12 months for routed items. Do not describe the outcome as a pure account-ownership measure or as prospective risk. |
 
 ### Target construction boundary
 
-The approved approach is to use the workbook's precomputed `Access_fnl` category
-as disseminated, with the code labels above. The exact derivation syntax and
-item-level crosswalk were reported unavailable. Therefore, document that the
-project uses the precomputed classification and does not independently
-reconstruct it. Do not assemble a binary target from arbitrary service items.
-Any future attempt to rebuild the classification requires official derivation
-syntax or a variable-to-classification crosswalk.
+The approved target rule maps the exact `Overall_Access_fnl` text values
+`formal only` and `informal only` to 0, and `excluded` to 1. The original
+`Overall_Access_fnl` and `Access_fnl` values are preserved. Do not derive the
+target from individual service indicators. The project's binary mapping does
+not verify how the provider originally produced either classification. Any
+claim about that methodology requires official derivation syntax or a
+variable-to-classification crosswalk.
 
 The questionnaire's C1 inventory covers savings (items 1a–9), registered
 transaction services (10–12b), loans (13a–31), a Postbank account (32),
@@ -73,16 +74,17 @@ the same construct.
 | Geography | `county`; `A08` | The report presents county and rural/urban comparisons. The questionnaire identifies `A08` as cluster type (1 Rural, 2 Urban); it is not the stratum identifier. |
 | Livelihood and income | `B3A__2`, `B3A__4`, `B3Ii` | B3A records income sources reported for the past 12 months; the candidate fields represent Employed and Running own business/Self employed. `B3Ii` records total income received in the past month. Review the full B3A categories and income special codes before selecting or transforming them. |
 | Identification | `ID_card` | The workbook label says ownership of an identity document (National ID, passport, or alien ID); the report identifies national ID access as relevant. This combined field is not equivalent to national-ID ownership alone. Confirm the source question, coding, and derivation before use. |
-| Non-financial digital access | `S1`, `S2__1`, `S3`, optionally `S4` | The questionnaire asks about mobile-phone/tablet ownership and use (`S1`), phone internet capability (`S2__1`), general internet-use frequency (`S3`), and the main place/device for recent internet use (`S4`). These are candidates as general digital-access context, not as measures of financial-service use. Check skip patterns and special codes. |
+| Non-financial digital access | `S1`, `S3` | General phone access and internet-use frequency. `S2__1` and `S4` are retained for review but excluded from initial predictors due to unresolved export coding and routing exceptions, respectively. |
 | Functional difficulty | `A24i`–`A24vi` | The questionnaire asks about difficulty seeing, hearing, walking/climbing, remembering/concentrating, self-care, and communication. The group is approved for consideration; any combined disability indicator still requires a documented rule based on verified response categories. |
 
 For the interim extraction, the researcher confirmed the
 `2024_Finaccess_Publicdata` sheet, `A18` and `A20` rather than their derived
-alternatives, and inclusion of `S4`. Retain `Access_fnl` and
-`Overall_Access_fnl` as outcome/cross-check fields, plus `indWeight` and `A07`
-as candidate design fields; none is a predictor. Extract all source records
-without applying the 18+ restriction at this stage. The remaining exact fields
-are the approved candidates listed in the table above.
+alternatives, and inclusion of `S4`. `Overall_Access_fnl` is the sole source
+for the approved binary target; both it and `Access_fnl` are retained for
+traceability, not predictors. `indWeight` and `A07` remain separate design
+fields, not predictors. The extraction retained all source records; the later
+adult-only preparation applies the approved 18+ restriction. The implemented
+predictor set is listed below.
 
 ### Not included in the approved shortlist
 
@@ -139,27 +141,60 @@ former, and never statuses, not missing-value codes. C2's 1/2 are Yes/No.
 Do not globally recode numeric values such as 98, 99, 96, or 97 without checking
 the field's value labels and routing. A blank caused by a questionnaire skip is
 not automatically equivalent to refusal or ordinary missingness. For target
-construction, unresolved/special responses must remain unlabeled until their
-meaning is verified; record counts and reasons rather than treating them as
-excluded. For predictors, preserve the distinction between structural skips,
-nonresponse, and substantive categories, then handle them only within the
-training pipeline after approval.
+construction, only the three approved exact `Overall_Access_fnl` labels are
+mapped. Null, unrecognized, or differently spelled labels cause an explicit
+error; they are not treated as either class or silently removed. For
+predictors, preserve special labels and Excel error tokens as observed
+categorical values unless an explicitly documented preprocessing step applies.
+The `S2__1` 0/1 meanings and S2/S4 skip inconsistencies remain unresolved.
 
 ## Approved decisions and remaining constraints
 
-- Approved outcome: `Access_fnl == 5` is excluded; codes 1–4 are not excluded.
-  `Overall_Access_fnl == 3` is a cross-check only.
+- Approved outcome mapping: `Overall_Access_fnl` exact label `excluded` -> 1;
+  `formal only` and `informal only` -> 0. `Access_fnl` is traceability only.
 - Approved population: selected individuals aged 18+.
 - Approved predictor groups: age, sex, education, county/rural-urban context,
   livelihood/income, identification, non-financial digital access, and
   functional difficulty.
 - Approved leakage boundary: exclude C1/C2, access-strand and service-use
   aggregates, and financial transaction/service-use fields from predictors.
-- The official `Access_fnl` derivation and stratum/EA crosswalk are unavailable.
-  Use the disseminated outcome field without reconstructing it; do not claim a
-  design-based analysis until the sampling identifiers are mapped. Weighted
-  individual-level analysis can be considered using `indWeight`, with the
-  estimand and weighting approach stated explicitly.
+- The provider's classification methodology and stratum/EA crosswalk are
+  unavailable. Do not claim that the provider's method has been independently
+  verified or that a design-based analysis has been conducted. Keep `indWeight`
+  and `A07` out of predictors; any later weighted analysis requires an explicit
+  estimand and justified weighting approach.
+
+## Prompt 6C implemented field set and preprocessing boundary
+
+The initial model uses exactly these 17 predictors from the approved groups:
+`A18`, `Sex`, `A20`, `county`, `A08`, `B3A__2`, `B3A__4`, `B3Ii`, `ID_card`,
+`S1`, `S3`, and `A24i`–`A24vi`. `S2__1` and `S4` remain in the dataset
+unchanged for review but are not predictors. `S4` is excluded due to
+unresolved routing exceptions. The questionnaire asks S2 only after S1
+categories 1, 2, or 3 and codes Yes=1, No=2, but the exported `S2__1`
+contains `0`, `1`, and `#NULL!`, with no verified export-to-questionnaire
+crosswalk. The researcher chose to exclude S2 pending that crosswalk rather
+than assume either meaning; no Yes/No recode or structural-skip imputation is
+applied. `indWeight` and `A07` are separate design fields, never predictors.
+Both outcome source fields are retained for traceability, never predictors.
+Direct financial service/transaction measures and wealth quantiles are
+excluded.
+
+Preprocessing converts `A18` and `B3Ii` to numeric values, imputes numeric
+missing values with the training median, and standardizes them. `B3Ii` is
+monthly income in KSh; non-numeric values (including `#NULL!`) and its
+questionnaire-specific 98/99 nonresponse codes become missing only within
+preprocessing. Original values remain unchanged in Parquet. The meaning of
+`#NULL!` remains unresolved. The 18+ dataset has 17,702 numeric values
+(range 100–200,000) and 2,044 `#NULL!` tokens; it contains no 98/99 values.
+
+At the researcher's direction, the undocumented `A20=95` is treated as
+missing inside preprocessing and imputed with the training mode. Its true
+meaning is still unknown; this is a project decision, not an official label.
+Other categorical fields are most-frequent-imputed and one-hot-encoded with
+unseen categories ignored; categorical error tokens remain distinct. All
+transformations are fit on training data only after a stratified split using
+the configured seed. No resampling is applied.
 
 ## Sources
 

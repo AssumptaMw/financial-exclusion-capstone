@@ -33,7 +33,7 @@ actual usage are distinct concepts.
 7. Produce confusion matrices and suitable SHAP explanations; interpret them as model associations, not causal effects.
 8. Package the approved preprocessing and model for FastAPI, load it once at application startup, and test the API and Docker deployment.
 
-Target construction, modeling, and deployment remain future stages.
+Model training and deployment remain future stages.
 
 ## Extract selected survey responses
 
@@ -66,6 +66,51 @@ from src.data.load_data import load_selected_data
 
 table = load_selected_data()
 ```
+
+## Prepare the adult analysis population
+
+After reviewing the extraction and the variable-selection documentation, run:
+
+```powershell
+python -m src.data.prepare_data
+```
+
+This writes `data/processed/finaccess_adults_unprepared.parquet` and the
+audit at `reports/results/data_cleaning_report.md`. Preparation applies only
+the approved 18+ restriction using `A18`; it treats that field's documented
+98/99 special responses separately, retains other values and all response
+labels/errors unchanged, and records the row counts and field-level audit.
+The interim Parquet is not modified. This adult-only response file remains an
+unmodified response table: target construction and predictor selection happen
+in the next step. Survey-design mappings still require verification.
+
+## Build the modeling dataset
+
+After reviewing `documentation/variable_selection.md`, run:
+
+```powershell
+python -m src.data.feature_engineering
+```
+
+This writes `data/processed/finaccess_modeling_dataset_6c.parquet`, preserving
+the earlier `finaccess_modeling_dataset.parquet` unchanged. The earlier file's
+predictor metadata describes Prompt 6B and must not be used as the current
+feature list. The
+`financial_exclusion_status` target is mapped from the exact observed
+`Overall_Access_fnl` labels; original outcome labels, `indWeight`, and `A07`
+are retained separately, not as predictors. The provider's classification
+methodology is not independently verified. For a reproducible 80/20
+stratified split and training-only preprocessing, use
+`src.data.preprocessing.split_modeling_data` and
+`src.data.preprocessing.build_preprocessor`; no estimator is trained by the
+dataset-construction command.
+
+The initial feature list excludes `S4` because of unresolved routing exceptions
+and `S2__1` because its workbook 0/1 encoding cannot yet be mapped reliably to
+questionnaire Yes/No codes. Both raw columns are retained for review.
+Preprocessing treats undocumented `A20=95` as missing and imputes it using the
+training mode; numeric income is median-imputed using training data. Original
+values remain unchanged in the Parquet files.
 
 ## Project structure
 
