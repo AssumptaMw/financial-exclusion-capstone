@@ -5,22 +5,75 @@
 
 ## Project overview
 
-This project will develop a reproducible and explainable machine learning workflow to study financial exclusion in Kenya using the 2024 FinAccess Household Survey. The original workbook is kept in `data/raw/` and must never be modified or committed. It is not included in this repository; access and use must follow the dataset's terms.
+This project develops a reproducible and explainable machine learning workflow
+to study financial exclusion in Kenya using the 2024 FinAccess Household
+Survey. The original workbook is kept in `data/raw/` and must never be
+modified or committed. It is not included in this repository; access and use
+must follow the dataset's terms.
 
 The approved target and predictor groups are documented in
 [variable_selection.md](documentation/variable_selection.md); some field and
 survey-design mappings remain unverified. Financial access, ownership, and
 actual usage are distinct concepts.
 
+## Research problem and aim
+
+Financial exclusion limits access to and use of financial services. The aim is
+to investigate whether approved non-financial characteristics can classify
+the survey's project-defined exclusion outcome, and to explain the resulting
+model's behavior. The survey is cross-sectional: this is not a forecast of
+future exclusion or an assessment of an individual's circumstances.
+
 ## Objectives
 
-- Inspect the workbook and supporting documentation before selecting data.
-- Establish and document an official, defensible financial-exclusion outcome.
-- Prepare an auditable dataset while preserving source variable names and recording transformations.
-- Build leakage-aware, reproducible preprocessing and modeling workflows.
-- Evaluate models with appropriate metrics, survey weights, and sampling-design considerations.
-- Explain model outputs without presenting associations as causal effects.
-- Provide a tested FastAPI interface and Docker-based deployment path after a model is approved.
+- Inspect the workbook and official materials; document the approved outcome
+  and remaining uncertainty about the provider's classification.
+- Prepare an auditable adult cohort and prevent outcome or preprocessing leakage.
+- Compare four classifiers using excluded-class F1 and complementary metrics.
+- Explain the selected model without presenting associations as causal effects.
+- Consider survey design and its unresolved implications for interpretation.
+- Provide a tested FastAPI, React and Docker demonstration.
+
+## Dataset, target and predictors
+
+The source is the [2024 FinAccess Household Survey](https://repository.knbs.or.ke/entities/publication/5b57f6d1-ad95-4a09-b9f8-b96cb6935680).
+The approved respondent-level worksheet yielded 20,871 records and 23 selected
+fields. The `A18` restriction retained **19,746 adults**: 1,121 records under
+18 and four records with age response codes 98/99 were excluded. The cohort has
+17,987 included and 1,759 excluded observations. These are unweighted sample
+counts, not national estimates; see the
+[cleaning report](reports/results/data_cleaning_report.md).
+
+The project maps the supplied `Overall_Access_fnl` labels exactly:
+
+| Supplied label | `financial_exclusion_status` |
+| --- | ---: |
+| `formal only` | 0 — financially included |
+| `informal only` | 0 — financially included |
+| `excluded` | 1 — financially excluded |
+
+Unexpected or missing target labels are rejected rather than guessed. The
+provider's original technical derivation of this classification has **not**
+been independently verified. `Overall_Access_fnl` and `Access_fnl` are retained
+for traceability, not predictors; individual financial-service indicators are
+not used to reconstruct the target.
+
+The 17 approved predictors are:
+
+| Group | Original variables |
+| --- | --- |
+| Demographics and education | `A18`, `Sex`, `A20` |
+| Geography | `county`, `A08` |
+| Livelihood and income | `B3A__2`, `B3A__4`, `B3Ii` |
+| Identification | `ID_card` |
+| General digital access | `S1`, `S3` |
+| Functional difficulties | `A24i`, `A24ii`, `A24iii`, `A24iv`, `A24v`, `A24vi` |
+
+`indWeight` and `A07` are retained as metadata, not predictors. Financial
+service and transaction fields are excluded to limit target leakage. `S2__1`
+and `S4` are excluded pending resolution of coding and routing issues; wealth
+quantile was not approved. See the [data dictionary](documentation/data_dictionary.md)
+and [variable selection](documentation/variable_selection.md).
 
 ## Proposed methodology
 
@@ -51,7 +104,8 @@ writes `data/interim/finaccess_selected.parquet`. It preserves the approved
 source column names and records extraction provenance in Parquet schema
 metadata under `finaccess_extraction`. The output is read back and checked
 against the source sheet's reported row and column counts before publication.
-The raw workbook is never modified. The dataset, including outcome and design
+Rerunning replaces the selected Parquet output. The raw workbook is never
+modified. The dataset, including outcome and design
 fields, is not a predictor matrix; no target or age filter is constructed here.
 
 Mixed text/numeric columns are serialized as text with their names recorded in
@@ -82,6 +136,7 @@ audit at `reports/results/data_cleaning_report.md`. Preparation applies only
 the approved 18+ restriction using `A18`; it treats that field's documented
 98/99 special responses separately, retains other values and all response
 labels/errors unchanged, and records the row counts and field-level audit.
+Rerunning replaces the adult output and refreshes the generated report section.
 Only the report section between the generated-section markers is refreshed;
 manual investigation findings outside those markers are preserved. An existing
 report with missing or malformed markers is rejected rather than overwritten.
@@ -102,7 +157,7 @@ python -m src.data.feature_engineering
 This writes `data/processed/finaccess_modeling_dataset_6c.parquet`, preserving
 the earlier `finaccess_modeling_dataset.parquet` unchanged. The earlier file's
 predictor metadata describes Prompt 6B and must not be used as the current
-feature list. The
+feature list. Rerunning replaces the 6C modeling output. The
 `financial_exclusion_status` target is mapped from the exact observed
 `Overall_Access_fnl` labels; original outcome labels, `indWeight`, and `A07`
 are retained separately, not as predictors. The provider's classification
@@ -116,8 +171,13 @@ The initial feature list excludes `S4` because of unresolved routing exceptions
 and `S2__1` because its workbook 0/1 encoding cannot yet be mapped reliably to
 questionnaire Yes/No codes. Both raw columns are retained for review.
 Preprocessing treats undocumented `A20=95` as missing and imputes it using the
-training mode; numeric income is median-imputed using training data. Original
-values remain unchanged in the Parquet files.
+training mode; numeric income's nonnumeric responses and field-specific 98/99
+codes become missing only in preprocessing. Numeric features are median
+imputed, with indicators for missingness observed during fitting, then scaled.
+Categorical features are mode-imputed and one-hot encoded; unseen categories
+are ignored. Original values remain unchanged in the Parquet files.
+Preprocessing is fitted only on
+training data, separately within each cross-validation fold.
 
 ## Exploratory analysis
 
@@ -127,7 +187,8 @@ directory. The EDA uses only the existing stratified training partition, writes
 `reports/results/eda_report.md` and figures under `reports/figures/`, and makes
 no feature-selection decisions. Percentages are unweighted sample
 descriptions, not national estimates or causal findings. Install the
-development requirements for notebook and plotting dependencies.
+development requirements for notebook and plotting dependencies. This command
+rewrites its existing EDA report and figures.
 
 ## Train and evaluate models
 
@@ -136,6 +197,10 @@ With the approved modeling Parquet present, run from the project root:
 ```powershell
 python -m src.models.train
 ```
+
+**Warning:** this standalone command retrains models and overwrites the local
+fitted artifact and the established evaluation reports and figures. Preserve
+them first if they must remain unchanged.
 
 The command reuses the established stratified split and preprocessing.
 Logistic regression, random forest, XGBoost and an RBF SVM are compared using
@@ -157,6 +222,43 @@ It is reused with researcher approval, but is no longer a pristine independent
 assessment; do not use its results to revise model selection or tune the
 threshold.
 
+### Recorded comparison and evaluation
+
+The following are five-fold, training-only **mean ± standard deviation**
+results, as recorded in the [model evaluation report](reports/results/model_evaluation_report.md).
+Precision, recall and F1 use excluded class 1; PR-AUC is average precision.
+The fixed candidates were not hyperparameter-tuned or resampled.
+
+| Model | Accuracy | Precision | Recall | F1 | ROC-AUC | PR-AUC |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Logistic Regression | 0.8991 ± 0.0027 | 0.4638 ± 0.0079 | 0.8486 ± 0.0245 | 0.5997 ± 0.0089 | 0.9236 ± 0.0065 | 0.5997 ± 0.0097 |
+| Random Forest | 0.9300 ± 0.0020 | 0.6528 ± 0.0214 | 0.4606 ± 0.0181 | 0.5397 ± 0.0130 | 0.9174 ± 0.0084 | 0.6068 ± 0.0099 |
+| XGBoost | 0.9108 ± 0.0039 | 0.4997 ± 0.0154 | 0.7399 ± 0.0268 | 0.5964 ± 0.0170 | 0.9180 ± 0.0079 | 0.6009 ± 0.0107 |
+| RBF SVM | 0.8998 ± 0.0044 | 0.4662 ± 0.0128 | 0.8515 ± 0.0209 | 0.6024 ± 0.0136 | 0.9251 ± 0.0061 | 0.5801 ± 0.0168 |
+
+The SVM was selected by highest mean excluded-class F1, with recall as the
+tie-breaker; exact ties follow the fixed candidate order. Logistic regression,
+random forest and SVM use balanced class weights; XGBoost computes its
+positive-class weight within each fit. The stratified 80/20 split (seed 42)
+has 15,796 training and 3,950 held-out records. No held-out scores were used
+for model selection.
+
+For the selected SVM, the recorded held-out accuracy is 0.8934, precision
+0.4462, recall 0.8125, F1 0.5760, ROC-AUC 0.9201 and average precision
+0.5646. The confusion matrix is:
+
+| Actual / predicted | Included (0) | Excluded (1) |
+| --- | ---: | ---: |
+| Included (0) | 3,243 | 355 |
+| Excluded (1) | 66 | 286 |
+
+The [classification report and metrics](reports/results/model_evaluation.json),
+[comparison details](reports/results/model_comparison.json), and
+[experiment settings](reports/results/model_experiment_config.json) provide
+the full results. **The held-out partition was previously inspected and is
+not a pristine independent assessment** of the expanded comparison. All
+reported metrics are unweighted sample results, not national estimates.
+
 ## Explain the selected model
 
 With the locally saved SVM pipeline and approved modeling Parquet present, run:
@@ -173,7 +275,16 @@ written under `reports/results/` and `reports/figures/`; the local example is
 a synthetic modal composite and does not export respondent values. SHAP values
 are approximate model associations, not probabilities, causal effects or
 national estimates. The small samples and independent masking of correlated
-predictors limit interpretation.
+predictors limit interpretation. This standalone command overwrites its
+existing SHAP report, JSON and figures.
+
+The recorded [SHAP report](reports/results/shap_report.md) uses 24 training
+rows as background and 64 disjoint training rows for the global sample, with
+128 sampled coalitions per explanation and seed 42. The highest mean absolute
+attributions in this sample were phone ownership/use (`S1`, 0.4229),
+identification document (`ID_card`, 0.1302) and age (`A18`, 0.0897), on the
+SVM decision-margin scale. These rankings are approximate and may change with
+the sample or masking; they do not establish causal relationships.
 
 ## End-to-end pipeline
 
@@ -274,6 +385,19 @@ The React demonstration connects to the local API through a Vite proxy without
 changing the API. See [frontend/README.md](frontend/README.md) for setup,
 configuration, tests and deployment limitations.
 
+With the API running, use a second terminal from the project root:
+
+```powershell
+Set-Location frontend
+npm ci
+Copy-Item .env.example .env
+npm run dev
+```
+
+Open the URL printed by Vite. `VITE_API_BASE_URL` defaults to `/api`, and
+`API_PROXY_TARGET` defaults to the local API. These are development settings;
+the Docker frontend uses its same-origin Nginx proxy.
+
 ## Run the application with Docker Compose
 
 Install Docker Desktop with the Compose plugin and start its engine. Place the
@@ -326,7 +450,12 @@ not definitive individual assessments.
 
 ## Project structure
 
-- `src/financial_exclusion/`: importable application package, configuration, and data, feature, model, evaluation, and API modules.
+- `src/data/`: workbook inspection, extraction, preparation, preprocessing and EDA.
+- `src/models/`: model comparison, evaluation, explainability and loading.
+- `src/pipeline.py`: isolated orchestration of the approved pipeline.
+- `src/financial_exclusion/api/`: FastAPI application and request/response schemas.
+- `src/financial_exclusion/config.py`: project paths and random seed.
+- `frontend/`: React/Vite interface, tests, and Nginx container configuration.
 - `data/raw/`: locally held original workbook; ignored by Git and Docker.
 - `data/interim/`, `data/processed/`: generated datasets; ignored by Git and Docker.
 - `documentation/`: data dictionary and methodology records.
@@ -334,6 +463,7 @@ not definitive individual assessments.
 - `reports/`, `artifacts/`: generated outputs, ignored by default; requested
   reports and figures are tracked, while the fitted model is kept local.
 - `tests/`: automated checks.
+- `Dockerfile`, `docker-compose.yml`, `requirements-serving.txt`: containerized serving.
 
 ## Setup
 
@@ -355,6 +485,45 @@ python -c "from financial_exclusion.config import PROJECT_ROOT, RANDOM_SEED; pri
 ```
 
 The workbook is intentionally not downloaded, copied, or processed by these setup steps. Runtime and development dependencies are separated in `requirements.txt` and `requirements-dev.txt`. Dependency versions are not yet locked; pinning them should follow selection and validation of the supported Python environment.
+
+### Tests and verified results
+
+From the project root, after installation:
+
+```powershell
+python -m pytest -q
+Set-Location frontend
+npm test
+npm run build
+```
+
+On 2026-11-20, the local environment passed **73 Python tests** and **9
+frontend tests**, and the frontend production build succeeded. The Python run
+reported one Starlette TestClient deprecation warning. The Docker Compose
+configuration, both container health checks, Swagger and a synthetic
+browser-to-API prediction were also verified in the Docker phase. The local
+model-dependent test is skipped when the trusted artifact is absent, so test
+counts may differ on another machine.
+
+## Research limitations and future work
+
+- The provider's classification derivation and the `A07` PSU/EA and stratum
+  crosswalks remain unverified. Obtain official technical documentation before
+  asserting a verified derivation or full design-based analysis.
+- The survey uses a complex design, but fitting, evaluation, split and folds
+  are unweighted and not verified as cluster-aware. Define an estimand and
+  assess appropriate survey-weighted and design-aware methods.
+- Seek a separately approved independent evaluation; the existing held-out
+  partition has already been inspected. Review threshold, class weights and
+  calibration without tuning on that partition.
+- Investigate unresolved `A20=95`, `S2__1` and `S4` coding/routing, and
+  consider how source encoding and missingness affect generalization.
+- SHAP describes approximate model associations, not causal effects. Small
+  samples, correlated predictors and independently masked combinations limit
+  interpretation.
+- Validate fairness, privacy, security and suitability before any practical
+  deployment. The SVM has no calibrated probabilities; its local artifact
+  contains support vectors and must not be committed or exposed.
 
 ## Responsible and transparent AI use
 
