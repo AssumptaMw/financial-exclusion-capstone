@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -254,16 +255,17 @@ def run_explanations(
     (results_dir / "shap_explanations.json").write_text(
         json.dumps(result, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
-    _write_report(results_dir / "shap_report.md", result)
+    _write_report(results_dir / "shap_report.md", result, figures_dir)
     if _sha256(model_path) != model_hash or _sha256(dataset_path) != dataset_hash:
         raise ValueError("The model or input dataset changed during explanation.")
     LOGGER.info("SHAP output created from %s training explanations", len(sample))
     return result
 
 
-def _write_report(path: Path, result: dict) -> None:
+def _write_report(path: Path, result: dict, figures_dir: Path) -> None:
     importance = result["global_mean_absolute_shap"]
     local = result["local"]
+    figure_link = Path(os.path.relpath(figures_dir, path.parent)).as_posix()
     lines = [
         "# SHAP explanations for the selected SVM",
         "",
@@ -283,15 +285,15 @@ def _write_report(path: Path, result: dict) -> None:
         "| --- | --- | ---: |",
         *[f"| `{name}` | {FEATURE_LABELS[name]} | {value:.4f} |" for name, value in importance.items()],
         "",
-        "![SHAP summary](../figures/shap_summary.png)",
-        "![SHAP feature importance](../figures/shap_feature_importance.png)",
+        f"![SHAP summary]({figure_link}/shap_summary.png)",
+        f"![SHAP feature importance]({figure_link}/shap_feature_importance.png)",
         "",
         "## Local explanation",
         "",
         "The local case is a synthetic composite of the per-variable modes among training rows the model predicts excluded. It is not a reported individual; the input values are not exported. Combining modes can form an implausible profile.",
         f"Its predicted class is {local['predicted_class']} (excluded), decision margin {local['margin']:.4f}, and background margin {result['expected_margin']:.4f}. The signed contributions in the figure and JSON sum to the difference.",
         "",
-        "![Synthetic local explanation](../figures/shap_local.png)",
+        f"![Synthetic local explanation]({figure_link}/shap_local.png)",
         "",
         "## Limitations",
         "",

@@ -150,7 +150,11 @@ def create_modeling_dataset(
     ) as temporary_directory:
         temporary_path = Path(temporary_directory) / destination.name
         pq.write_table(table, temporary_path, compression="snappy")
-        written = pq.read_table(temporary_path)
+        written_file = pq.ParquetFile(temporary_path)
+        try:
+            written = written_file.read()
+        finally:
+            written_file.close()
         if written.column_names != list(MODELING_COLUMNS):
             raise ValueError("Modeling Parquet columns do not match the approved schema.")
         if written.num_rows != source_table.num_rows:

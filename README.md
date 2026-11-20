@@ -174,6 +174,33 @@ are approximate model associations, not probabilities, causal effects or
 national estimates. The small samples and independent masking of correlated
 predictors limit interpretation.
 
+## End-to-end pipeline
+
+From the project root, choose a **new** run ID:
+
+```powershell
+python -m src.pipeline --run-id my-first-run
+```
+
+The existing selected interim Parquet, approved modeling Parquet, local SVM,
+cleaning report, and recorded training/SHAP provenance must already exist.
+The pipeline regenerates adult and modeling data in a separate run directory,
+checks their values and order against the approved modeling dataset, and
+compares all four candidates in training-only cross-validation. It refits the
+winner in memory and stops before evaluation unless the winner is SVM and its
+fitted SVC state and training preprocessing outputs match the saved model.
+It then evaluates and explains the **existing** SVM without rewriting it.
+
+Outputs are isolated under `data/processed/pipeline_runs/<run-id>/`,
+`reports/results/pipeline_runs/<run-id>/`, and
+`reports/figures/pipeline_runs/<run-id>/`. The cleaning report is copied first
+so manual findings survive the generated-section refresh. Existing run
+directories are never overwritten: choose a different ID to run again.
+Failed runs remain in place for inspection and have no completion manifest.
+The manifest records input hashes and settings; generated data and the local
+SVM remain Git-ignored. The existing test partition was previously evaluated,
+so its repeated evaluation is not a pristine independent assessment.
+
 ## Project structure
 
 - `src/financial_exclusion/`: importable application package, configuration, and data, feature, model, evaluation, and API modules.

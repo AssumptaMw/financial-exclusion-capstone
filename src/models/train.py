@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 import platform
 import sys
 from pathlib import Path
@@ -141,7 +142,21 @@ def run_experiment(
     if not np.array_equal(model.predict(X_train.iloc[:5]), reloaded.predict(X_train.iloc[:5])):
         raise ValueError("Reloaded pipeline predictions do not match the fitted model.")
     metrics = evaluate_model(reloaded, X_test, y_test, figures_dir)
+    write_experiment_results(
+        dataset_path, results_dir, figures_dir, len(X_train), len(X_test),
+        selected, comparison, metrics,
+    )
+    LOGGER.info("Selected %s; saved fitted pipeline to %s", selected, model_path)
+    return {"selected_model": selected, "comparison": comparison, "metrics": metrics, "model_path": model_path}
 
+
+def write_experiment_results(
+    dataset_path: Path, results_dir: Path, figures_dir: Path,
+    train_rows: int, test_rows: int, selected: str, comparison: dict, metrics: dict,
+) -> None:
+    """Write the established experiment metadata and evaluation report."""
+    dataset_path, results_dir, figures_dir = Path(dataset_path), Path(results_dir), Path(figures_dir)
+    results_dir.mkdir(parents=True, exist_ok=True)
     digest = hashlib.sha256()
     with dataset_path.open("rb") as source:
         for block in iter(lambda: source.read(1024 * 1024), b""):
@@ -151,8 +166,8 @@ def run_experiment(
         "dataset_sha256": digest.hexdigest(),
         "predictors": list(PREDICTOR_COLUMNS),
         "target": TARGET_COLUMN,
-        "train_rows": len(X_train),
-        "test_rows": len(X_test),
+        "train_rows": train_rows,
+        "test_rows": test_rows,
         "split": {"method": "stratified train_test_split", "test_size": 0.2, "random_state": RANDOM_SEED},
         "cross_validation": {"method": "StratifiedKFold", "folds": 5, "shuffle": True, "random_state": RANDOM_SEED},
         "selection": "highest mean CV F1 for class 1; recall breaks ties; candidate order breaks exact ties",
@@ -181,17 +196,19 @@ def run_experiment(
         ("model_experiment_config.json", config),
     ):
         (results_dir / name).write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
-    _write_report(results_dir / "model_evaluation_report.md", selected, comparison, metrics, config)
-    LOGGER.info("Selected %s; saved fitted pipeline to %s", selected, model_path)
-    return {"selected_model": selected, "comparison": comparison, "metrics": metrics, "model_path": model_path}
+    _write_report(results_dir / "model_evaluation_report.md", selected, comparison, metrics, config, figures_dir)
 
 
-def _write_report(path: Path, selected: str, comparison: dict, metrics: dict, config: dict) -> None:
+def _write_report(
+    path: Path, selected: str, comparison: dict, metrics: dict, config: dict,
+    figures_dir: Path,
+) -> None:
     rows = []
     for name, scores in comparison.items():
         values = [f"{scores[metric]['mean']:.4f} ± {scores[metric]['std']:.4f}" for metric in SCORING]
         rows.append("| " + " | ".join([name, *values]) + " |")
     matrix = metrics["confusion_matrix"]
+    figure_link = Path(os.path.relpath(figures_dir, path.parent)).as_posix()
     report = [
         "# Model training and evaluation",
         "",
@@ -231,9 +248,9 @@ def _write_report(path: Path, selected: str, comparison: dict, metrics: dict, co
         "",
         "The full classification report and metric values are in `model_evaluation.json`.",
         "",
-        "![Confusion matrix](../figures/model_confusion_matrix.png)",
-        "![ROC curve](../figures/model_roc.png)",
-        "![Precision-recall curve](../figures/model_precision_recall.png)",
+        f"![Confusion matrix]({figure_link}/model_confusion_matrix.png)",
+        f"![ROC curve]({figure_link}/model_roc.png)",
+        f"![Precision-recall curve]({figure_link}/model_precision_recall.png)",
         "",
         "## Limitations",
         "",
