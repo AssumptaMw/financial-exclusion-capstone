@@ -33,8 +33,9 @@ actual usage are distinct concepts.
 7. Produce confusion matrices and suitable SHAP explanations; interpret them as model associations, not causal effects.
 8. Package the approved preprocessing and model for FastAPI, load it once at application startup, and test the API and Docker deployment.
 
-Model comparison, held-out evaluation and training-only SHAP explanations are
-implemented. Deployment remains a future stage.
+Model comparison, held-out evaluation, training-only SHAP explanations and a
+local prediction API are implemented. Container deployment remains a future
+stage.
 
 ## Extract selected survey responses
 
@@ -200,6 +201,72 @@ Failed runs remain in place for inspection and have no completion manifest.
 The manifest records input hashes and settings; generated data and the local
 SVM remain Git-ignored. The existing test partition was previously evaluated,
 so its repeated evaluation is not a pristine independent assessment.
+
+## Local prediction API
+
+Install the requirements as described below and place the **trusted**, compatible
+fitted pipeline at `artifacts/financial_exclusion_pipeline.joblib`. From the
+project root:
+
+```powershell
+python -m uvicorn src.financial_exclusion.api.main:app --host 127.0.0.1 --port 8000
+```
+
+Visit `http://127.0.0.1:8000/docs` for the interactive schema, `GET /` for
+service information and `GET /health` for model readiness. The pipeline is
+loaded once per server process at startup; if loading fails, health and
+predictions return 503 until the service is restarted with a valid model.
+Never load an untrusted Joblib file: deserialization can execute code.
+
+`POST /predict` accepts one JSON object. `POST /predict/batch` accepts
+`{"records": [<object>, ...]}` with 1–100 records and returns predictions in
+the same order. For example, this is a synthetic single-record request:
+
+```json
+{
+  "A18": 35,
+  "Sex": "Female",
+  "A20": "\"Secondary completed \"",
+  "county": "Nairobi City",
+  "A08": "Urban",
+  "B3A__2": 1,
+  "B3A__4": 0,
+  "B3Ii": 10000,
+  "ID_card": "No ID",
+  "S1": "I own a mobile that only I use/Nina simu ambayo ni mimi tu ninaitumia",
+  "S3": "Daily/\"Kila siku\"",
+  "A24i": "No- no difficulty",
+  "A24ii": "No- no difficulty",
+  "A24iii": "No- no difficulty",
+  "A24iv": "No- no difficulty",
+  "A24v": "No- no difficulty",
+  "A24vi": "No- no difficulty"
+}
+```
+
+All 17 fields are required; missing values can be expressed as `null` except
+for `A18`, which must be an eligible adult age and cannot be the 98/99 special
+codes. `B3A__2` and `B3A__4` are workbook 0/1 indicators. `B3Ii` accepts
+non-negative numeric amounts, `null`, or the source token `#NULL!`. Categories
+are the **exact workbook text representations**, not questionnaire numeric
+codes; quotation marks, spacing and encoding artifacts may be significant.
+The source code `A20=95` is accepted as the string `"95"`. Consult the data
+dictionary before interpreting fields. The saved preprocessing performs
+imputation and encoding; unseen categorical labels are ignored by its
+one-hot encoder and can yield unreliable predictions. The API does not log
+request bodies; review server and proxy logging before deployment.
+
+Responses provide `financial_exclusion_status` (0 included, 1 excluded) and a
+human-readable `label`. The saved SVM does not provide calibrated probabilities,
+so no probability, confidence or decision score is returned. The prediction is
+a cross-sectional model classification, not a causal or nationally
+representative estimate, and its target derivation and survey design remain
+subject to the documented limitations.
+
+The local API does not include authentication, encryption, rate limiting or
+data-governance controls. Configure these and assess prediction/model-inference
+privacy risks before any external or production deployment; do not expose the
+local model artifact, which contains support vectors.
 
 ## Project structure
 

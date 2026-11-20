@@ -9,7 +9,6 @@ import os
 import sys
 from pathlib import Path
 
-import joblib
 import matplotlib
 
 matplotlib.use("Agg")
@@ -19,15 +18,14 @@ import numpy as np
 import pandas as pd
 import shap
 from sklearn.pipeline import Pipeline
-from sklearn.svm import SVC
 
 from src.data.feature_engineering import MODELING_DATASET_PATH, PREDICTOR_COLUMNS
 from src.data.preprocessing import CATEGORICAL_FEATURES, NUMERIC_FEATURES, split_modeling_data
-from src.financial_exclusion.config import ARTIFACTS_DIR, RANDOM_SEED, REPORTS_DIR
+from src.financial_exclusion.config import RANDOM_SEED, REPORTS_DIR
+from src.models.load_model import MODEL_PATH, load_svm
 from src.models.train import load_modeling_data
 
 LOGGER = logging.getLogger(__name__)
-MODEL_PATH = ARTIFACTS_DIR / "financial_exclusion_pipeline.joblib"
 RESULTS_DIR = REPORTS_DIR / "results"
 FIGURES_DIR = REPORTS_DIR / "figures"
 BACKGROUND_SIZE = 24
@@ -52,22 +50,6 @@ FEATURE_LABELS = {
     "A24v": "Difficulty with self-care",
     "A24vi": "Difficulty communicating",
 }
-
-
-def load_svm(path: Path) -> Pipeline:
-    """Load the trusted local pipeline and verify the class-1 score semantics."""
-    path = Path(path)
-    if not path.is_file():
-        raise FileNotFoundError(f"Fitted SVM pipeline does not exist: {path}")
-    model = joblib.load(path)
-    if not isinstance(model, Pipeline) or list(model.named_steps) != ["preprocessing", "estimator"]:
-        raise ValueError("Expected the fitted preprocessing and estimator pipeline.")
-    estimator = model.named_steps["estimator"]
-    if not isinstance(estimator, SVC) or estimator.kernel != "rbf":
-        raise ValueError("Expected the selected RBF SVC estimator.")
-    if list(estimator.classes_) != [0, 1]:
-        raise ValueError("SVM classes must be ordered as included 0, excluded 1.")
-    return model
 
 
 def transformed_feature_mapping(model: Pipeline) -> list[dict[str, str]]:
