@@ -31,7 +31,7 @@ export const sections = [
     title: 'About the respondent',
     description: 'Basic demographic and location information.',
     fields: [
-      { name: 'A18', label: 'Age', type: 'age', hint: 'Adults aged 18 or older; 98 and 99 are survey nonresponse codes.' },
+      { name: 'A18', label: 'Age', type: 'age', hint: 'Adults aged 18 or older.' },
       { name: 'Sex', label: 'Sex of selected individual', options: [option('Female'), option('Male')] },
       {
         name: 'A20', label: 'Highest education completed',
@@ -62,7 +62,7 @@ export const sections = [
     fields: [
       { name: 'B3A__2', label: 'Employed income-source indicator', options: incomeIndicator, hint: 'Whether income was received from employment in the past 12 months (0=No, 1=Yes).' },
       { name: 'B3A__4', label: 'Own business income-source indicator', options: incomeIndicator, hint: 'Whether income was received from running own business/self-employment in the past 12 months (0=No, 1=Yes).' },
-      { name: 'B3Ii', label: 'Total income last month', type: 'income', hint: 'In Kenyan shillings. Codes 98 and 99 are treated as missing by the model.' },
+      { name: 'B3Ii', label: 'Total income last month', type: 'income', hint: 'In Kenyan shillings.' },
       { name: 'ID_card', label: 'Identification document', options: [
         option('Has ID (national ID, passport or alien ID)', 'Has ID (National Identity Card (ID),Passport,Alien ID)'),
         option('No ID'),
@@ -119,7 +119,7 @@ export function prepareRequest(values, incomeMissing) {
     if (field.type === 'age') {
       const age = Number(value);
       if (!/^\d+$/.test(value) || !Number.isSafeInteger(age) || age < 18 || age === 98 || age === 99) {
-        errors[field.name] = 'Enter an adult age; 98 and 99 are survey nonresponse codes.';
+        errors[field.name] = 'Enter an adult age (18+).';
       } else {
         payload[field.name] = age;
       }
@@ -144,4 +144,9 @@ export function prepareRequest(values, incomeMissing) {
     }
   }
   return { errors, payload };
+}
+
+export function getFieldLabel(fieldName) {
+  const field = fields.find(f => f.name === fieldName);
+  return field ? field.label : fieldName;
 }

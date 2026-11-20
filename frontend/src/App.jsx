@@ -76,7 +76,7 @@ function ExplanationSection({ explanation }) {
           {explanation.contributors.map((contrib, idx) => (
             <div key={idx} className="contributor-item">
               <div className="contributor-header">
-                <span className="contributor-name">{contrib.variable}</span>
+                <span className="contributor-name">{contrib.label}</span>
                 <span className={`contributor-direction ${contrib.direction.replace(' ', '-')}`}>
                   {contrib.direction}
                 </span>
@@ -189,7 +189,7 @@ export default function App() {
             <a href="#prediction">Prediction</a>
             <a href="#about">About the model</a>
           </nav>
-          <span className="header-tag"><span /> MSc CAPSTONE</span>
+          <span className="header-tag"><span /></span>
         </div>
       </header>
 
@@ -268,7 +268,7 @@ export default function App() {
           </div>
         </div>
       </main>
-      <footer><span>FinAccess Insights</span><p>An MSc Data Science capstone · Academic research demonstration</p><a href="#top">Back to top ↑</a></footer>
+      <footer><span>FinAccess Insights</span><a href="#top">Back to top ↑</a></footer>
     </>
   );
 }
