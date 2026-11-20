@@ -39,16 +39,28 @@ Compare suitable baseline and advanced classifiers after approving the outcome a
 
 ### Implemented Phase 8 experiment
 
-The established stratified 80/20 split (seed 42) is reused. Logistic
-regression and random forest use balanced class weights and fixed settings,
-without resampling or hyperparameter tuning. Their complete preprocessing and
-estimators are fit separately in each of five shuffled stratified training
-folds (seed 42). The researcher approved selecting the highest mean F1 for the
-excluded class; mean recall breaks a tie, followed by the baseline in an exact
-tie. The selected pipeline is refit on all training data before a single
-held-out evaluation at the default 0.5 probability threshold.
-The held-out results must not be used to revise model selection or tune the
-threshold; such use would compromise their role as an untouched assessment.
+The established stratified 80/20 split (seed 42) is reused. The approved
+proposal's four candidates are logistic regression, random forest, XGBoost and
+an RBF SVM. Logistic regression, random forest and SVM use balanced class
+weights; XGBoost computes its positive-class weight from the negative/positive
+ratio within each fit. Fixed settings are used without resampling or
+hyperparameter tuning. Each candidate's complete preprocessing and estimator
+are fit separately in five shuffled stratified training folds (seed 42).
+Highest mean F1 for the excluded class selects the model; mean recall breaks a
+tie, followed by the fixed candidate order in an exact tie. The selected
+pipeline is refit on all training data before held-out evaluation at its
+default decision threshold. SVM ROC-AUC and PR-AUC use decision scores, not
+calibrated probabilities.
+
+The same held-out partition was evaluated in the earlier two-model experiment.
+The researcher approved reusing it for the expanded proposal comparison, but
+it is no longer a pristine independent assessment. Do not use its results to
+revise model selection or tune the threshold. A fresh independent evaluation
+requires separately approved data or design.
+The selected SVM stores transformed training observations as support vectors.
+Its fitted pipeline must remain local rather than being committed as an
+artifact; the previously tracked logistic-regression artifact remains in Git
+history.
 
 Precision, recall, F1, accuracy, ROC-AUC and PR-AUC are unweighted; PR-AUC is
 reported as average precision, a step-weighted area. The report includes a

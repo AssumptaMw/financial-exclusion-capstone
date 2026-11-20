@@ -8,6 +8,7 @@ pyarrow
 # Modeling and model persistence
 scikit-learn
 joblib
+xgboost
 
 # Explainability
 shap

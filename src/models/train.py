@@ -15,10 +15,12 @@ import pandas as pd
 import pyarrow
 import pyarrow.parquet as pq
 import sklearn
+import xgboost
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedKFold, cross_validate
 from sklearn.pipeline import Pipeline
+from sklearn.svm import SVC
 
 from src.data.feature_engineering import (
     MODEL_METADATA_KEY,
@@ -28,6 +30,7 @@ from src.data.feature_engineering import (
 )
 from src.data.preprocessing import build_model_pipeline, split_modeling_data
 from src.financial_exclusion.config import ARTIFACTS_DIR, RANDOM_SEED, REPORTS_DIR
+from src.models.estimators import BalancedXGBClassifier
 from src.models.evaluate import evaluate_model
 
 LOGGER = logging.getLogger(__name__)
@@ -60,7 +63,7 @@ def load_modeling_data(path: Path) -> pd.DataFrame:
 
 def train_candidates(
     X_train: pd.DataFrame, y_train: pd.Series, *, cv_splits: int = 5,
-    forest_trees: int = 100,
+    forest_trees: int = 100, boosting_rounds: int = 100,
 ) -> tuple[str, Pipeline, dict]:
     """Compare fixed candidates on training folds, select by F1 then recall, and refit."""
     counts = y_train.value_counts()
@@ -80,6 +83,14 @@ def train_candidates(
             n_estimators=forest_trees, class_weight="balanced",
             random_state=RANDOM_SEED, n_jobs=-1,
         ),
+        "xgboost": BalancedXGBClassifier(
+            n_estimators=boosting_rounds, random_state=RANDOM_SEED,
+            n_jobs=4, tree_method="hist",
+        ),
+        "svm": SVC(
+            kernel="rbf", class_weight="balanced", probability=False,
+            cache_size=512, random_state=RANDOM_SEED,
+        ),
     }
     cv = StratifiedKFold(n_splits=cv_splits, shuffle=True, random_state=RANDOM_SEED)
     results = {}
@@ -97,7 +108,7 @@ def train_candidates(
             }
             for metric in SCORING
         }
-    # In a complete tie, candidate insertion order deterministically favors the baseline.
+    # Exact ties follow the fixed candidate order.
     selected = max(
         candidates,
         key=lambda name: (results[name]["f1"]["mean"], results[name]["recall"]["mean"]),
@@ -113,7 +124,7 @@ def run_experiment(
     figures_dir: Path = REPORTS_DIR / "figures",
     artifacts_dir: Path = ARTIFACTS_DIR,
 ) -> dict:
-    """Train using the established split and evaluate the selected pipeline once."""
+    """Train on the established split and evaluate after training-only selection."""
     dataset_path = Path(dataset_path)
     results_dir = Path(results_dir)
     figures_dir = Path(figures_dir)
@@ -144,20 +155,24 @@ def run_experiment(
         "test_rows": len(X_test),
         "split": {"method": "stratified train_test_split", "test_size": 0.2, "random_state": RANDOM_SEED},
         "cross_validation": {"method": "StratifiedKFold", "folds": 5, "shuffle": True, "random_state": RANDOM_SEED},
-        "selection": "highest mean CV F1 for class 1; recall breaks ties; baseline breaks exact ties",
+        "selection": "highest mean CV F1 for class 1; recall breaks ties; candidate order breaks exact ties",
         "candidates": {
             "logistic_regression": {"class_weight": "balanced", "max_iter": 1000, "solver": "liblinear", "random_state": RANDOM_SEED},
             "random_forest": {"class_weight": "balanced", "n_estimators": 100, "random_state": RANDOM_SEED, "n_jobs": -1},
+            "xgboost": {"scale_pos_weight": "negative/positive count within each fit", "n_estimators": 100, "tree_method": "hist", "random_state": RANDOM_SEED, "n_jobs": 4},
+            "svm": {"kernel": "rbf", "class_weight": "balanced", "probability": False, "cache_size_mb": 512, "random_state": RANDOM_SEED},
         },
-        "decision_threshold": 0.5,
+        "decision_threshold": metrics["threshold"],
+        "score_type": metrics["score_type"],
         "positive_class": 1,
         "pr_auc_definition": "average precision (step-weighted precision-recall area)",
         "survey_weights_used": False,
         "selected_model": selected,
+        "test_partition_previously_evaluated": True,
         "versions": {
             "python": platform.python_version(), "scikit_learn": sklearn.__version__,
             "pandas": pd.__version__, "numpy": np.__version__, "pyarrow": pyarrow.__version__,
-            "joblib": joblib.__version__,
+            "joblib": joblib.__version__, "xgboost": xgboost.__version__,
         },
     }
     for name, value in (
@@ -185,8 +200,11 @@ def _write_report(path: Path, selected: str, comparison: dict, metrics: dict, co
         f"- Input: `{config['dataset']}`; SHA-256 `{config['dataset_sha256']}`.",
         f"- Existing stratified 80/20 split (seed {RANDOM_SEED}): {config['train_rows']:,} training and {config['test_rows']:,} held-out respondents.",
         "- Five shuffled stratified training folds (seed 42); each fold fits its own existing preprocessing and estimator. No resampling or hyperparameter tuning.",
-        "- Fixed logistic regression and random forest candidates use balanced class weights. Select the highest mean training-fold F1 for excluded class 1, then recall; exact ties favor logistic regression.",
-        "- Predictions use the estimators' default 0.5 probability threshold. PR-AUC is average precision (step-weighted area); fold standard deviations use population convention (ddof=0).",
+        "- The approved proposal specifies four candidates: logistic regression (baseline), random forest (bagged trees), XGBoost (boosted trees), and an RBF support vector machine.",
+        "- Logistic regression, random forest and SVM use balanced class weights; XGBoost calculates its positive-class weight from the negative/positive ratio within each fit, including each training fold.",
+        "- Select the highest mean training-fold F1 for excluded class 1, then recall; complete ties follow the fixed order listed above. No candidate uses test results for selection.",
+        f"- The selected model uses {metrics['score_type']} with the default decision threshold {metrics['threshold']}. SVM uses decision scores rather than calibrated probabilities. PR-AUC is average precision (step-weighted area); fold standard deviations use population convention (ddof=0).",
+        "- This test partition was already evaluated and its results shared in the earlier two-model Phase 8 experiment. It is reused with researcher approval and is not a pristine independent assessment of the expanded comparison.",
         "- Metrics are unweighted sample descriptions; survey weights and design were not incorporated. The split and folds are not verified as cluster-aware.",
         "- The provider's original outcome classification derivation remains unverified. These cross-sectional results are neither causal nor nationally representative.",
         "",
@@ -219,7 +237,11 @@ def _write_report(path: Path, selected: str, comparison: dict, metrics: dict, co
         "",
         "## Limitations",
         "",
-        "Recall and F1 concern the excluded class, not a population-level estimate. Threshold, model choice, and class weights require further substantive review; no test-set tuning was performed. Unresolved predictor response codes and survey design mappings remain documented in the variable selection and cleaning reports.",
+        "Recall and F1 concern the excluded class, not a population-level estimate. The previously examined test partition cannot provide a pristine assessment after expanding the candidate set; independent evaluation requires separately approved data or design. Threshold, model choice, and class weights require further substantive review; no test-set tuning was performed. Unresolved predictor response codes and survey design mappings remain documented in the variable selection and cleaning reports.",
+        *(
+            ["The fitted SVM contains transformed training observations as support vectors; keep the artifact local and do not commit it."]
+            if selected == "svm" else []
+        ),
         "",
     ]
     path.write_text("\n".join(report), encoding="utf-8")

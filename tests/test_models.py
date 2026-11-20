@@ -4,10 +4,12 @@ import pandas as pd
 import pytest
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
+from sklearn.svm import SVC
 
 from src.data.feature_engineering import PREDICTOR_COLUMNS
-from src.data.preprocessing import build_preprocessor
+from src.data.preprocessing import build_model_pipeline, build_preprocessor
 from src.models import train
+from src.models.estimators import BalancedXGBClassifier
 from src.models.evaluate import evaluate_model
 
 
@@ -44,13 +46,16 @@ def test_cross_validation_fits_preprocessing_within_folds_and_refits_on_training
         lambda estimator: Pipeline([("preprocessing", RecordingPreprocessor()), ("estimator", estimator)]),
     )
 
-    selected, model, scores = train.train_candidates(X, y, cv_splits=2, forest_trees=3)
+    selected, model, scores = train.train_candidates(
+        X, y, cv_splits=2, forest_trees=3, boosting_rounds=3
+    )
 
     fits = RecordingPreprocessor.fitted_indices
-    assert len(fits) == 5
-    assert all(len(indices) == 30 and indices < set(X.index) for indices in fits[:4])
+    assert len(fits) == 9
+    assert all(len(indices) == 30 and indices < set(X.index) for indices in fits[:8])
     assert fits[-1] == set(X.index)
-    assert selected in scores and model.named_steps["estimator"].class_weight == "balanced"
+    assert set(scores) == {"logistic_regression", "random_forest", "xgboost", "svm"}
+    assert selected in scores
     assert all(len(result["f1"]["folds"]) == 2 for result in scores.values())
     assert selected == max(scores, key=lambda name: (scores[name]["f1"]["mean"], scores[name]["recall"]["mean"]))
 
@@ -58,16 +63,21 @@ def test_cross_validation_fits_preprocessing_within_folds_and_refits_on_training
 def test_serialized_model_predicts_unseen_categories_and_rejects_leakage(tmp_path):
     X = sample_predictors()
     y = pd.Series([int(index % 5 == 0) for index in range(len(X))])
-    selected, model, _ = train.train_candidates(X.iloc[:50], y.iloc[:50], cv_splits=2, forest_trees=3)
+    selected, model, _ = train.train_candidates(
+        X.iloc[:50], y.iloc[:50], cv_splits=2, forest_trees=3, boosting_rounds=3
+    )
     holdout = X.iloc[50:].copy()
     holdout.loc[:, "county"] = "Holdout-only county"
     path = tmp_path / "pipeline.joblib"
     joblib.dump(model, path)
     loaded = joblib.load(path)
 
-    assert selected in ("logistic_regression", "random_forest")
+    assert selected in ("logistic_regression", "random_forest", "xgboost", "svm")
     np.testing.assert_array_equal(model.predict(holdout), loaded.predict(holdout))
-    np.testing.assert_allclose(model.predict_proba(holdout), loaded.predict_proba(holdout))
+    if hasattr(model, "predict_proba"):
+        np.testing.assert_allclose(model.predict_proba(holdout), loaded.predict_proba(holdout))
+    else:
+        np.testing.assert_allclose(model.decision_function(holdout), loaded.decision_function(holdout))
     categories = loaded.named_steps["preprocessing"].named_steps["preprocessor"].named_transformers_["categorical"].named_steps["onehot"].categories_
     assert "Holdout-only county" not in set().union(*(set(values) for values in categories))
     with pytest.raises(ValueError, match="unexpected"):
@@ -123,3 +133,56 @@ def test_model_selection_prioritizes_f1_over_recall(monkeypatch):
     selected, _, _ = train.train_candidates(X, y, cv_splits=2, forest_trees=3)
 
     assert selected == "logistic_regression"
+
+
+def test_xgboost_computes_weight_from_each_fit():
+    estimator = BalancedXGBClassifier(n_estimators=2, n_jobs=1, random_state=42)
+    X = np.arange(12).reshape(6, 2)
+
+    estimator.fit(X, np.array([0, 0, 0, 0, 1, 1]))
+    assert estimator.get_params()["scale_pos_weight"] == 2
+    estimator.fit(X, np.array([0, 0, 0, 1, 1, 1]))
+    assert estimator.get_params()["scale_pos_weight"] == 1
+    with pytest.raises(ValueError, match="both non-null binary"):
+        estimator.fit(X, np.zeros(6))
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [BalancedXGBClassifier(n_estimators=2, n_jobs=1, random_state=42),
+     SVC(class_weight="balanced", probability=False)],
+)
+def test_added_models_serialize_as_complete_pipelines(estimator, tmp_path):
+    X = sample_predictors()
+    y = pd.Series([int(index % 5 == 0) for index in range(len(X))])
+    model = build_model_pipeline(estimator).fit(X, y)
+    path = tmp_path / "pipeline.joblib"
+    joblib.dump(model, path)
+
+    reloaded = joblib.load(path)
+
+    np.testing.assert_array_equal(model.predict(X.iloc[:5]), reloaded.predict(X.iloc[:5]))
+    if hasattr(model, "predict_proba"):
+        np.testing.assert_allclose(model.predict_proba(X.iloc[:5]), reloaded.predict_proba(X.iloc[:5]))
+    else:
+        np.testing.assert_allclose(model.decision_function(X.iloc[:5]), reloaded.decision_function(X.iloc[:5]))
+
+
+class KnownDecisionScores:
+    classes_ = np.array([0, 1])
+
+    def predict(self, X):
+        return np.array([0, 1, 0, 1])
+
+    def decision_function(self, X):
+        return np.array([-0.8, 0.2, -0.2, 0.8])
+
+
+def test_evaluate_svm_style_decision_scores(tmp_path):
+    y = pd.Series([0, 0, 1, 1])
+    metrics = evaluate_model(KnownDecisionScores(), pd.DataFrame({"x": range(4)}), y, tmp_path)
+
+    assert metrics["score_type"] == "decision_function"
+    assert metrics["threshold"] == 0
+    assert metrics["roc_auc"] == 0.75
+    assert metrics["pr_auc_average_precision"] == pytest.approx(5 / 6)

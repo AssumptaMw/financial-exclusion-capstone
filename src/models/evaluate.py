@@ -1,4 +1,4 @@
-"""Evaluate a fitted pipeline on the untouched held-out partition."""
+"""Evaluate a fitted pipeline on the established held-out partition."""
 
 from pathlib import Path
 
@@ -33,18 +33,28 @@ def evaluate_model(
     if list(model.classes_) != [0, 1]:
         raise ValueError("The fitted model must expose classes 0 and 1 in order.")
     predictions = model.predict(X_test)
-    probabilities = model.predict_proba(X_test)[:, 1]
+    if hasattr(model, "predict_proba"):
+        scores = model.predict_proba(X_test)[:, 1]
+        score_type = "positive_class_probability"
+        threshold = 0.5
+    elif hasattr(model, "decision_function"):
+        scores = model.decision_function(X_test)
+        score_type = "decision_function"
+        threshold = 0.0
+    else:
+        raise ValueError("The fitted model must provide probabilities or decision scores.")
     matrix = confusion_matrix(y_test, predictions, labels=[0, 1])
     metrics = {
         "n": int(len(y_test)),
         "positive_class": 1,
-        "threshold": 0.5,
+        "threshold": threshold,
+        "score_type": score_type,
         "accuracy": float(accuracy_score(y_test, predictions)),
         "precision": float(precision_score(y_test, predictions, zero_division=0)),
         "recall": float(recall_score(y_test, predictions, zero_division=0)),
         "f1": float(f1_score(y_test, predictions, zero_division=0)),
-        "roc_auc": float(roc_auc_score(y_test, probabilities)),
-        "pr_auc_average_precision": float(average_precision_score(y_test, probabilities)),
+        "roc_auc": float(roc_auc_score(y_test, scores)),
+        "pr_auc_average_precision": float(average_precision_score(y_test, scores)),
         "confusion_matrix": matrix.tolist(),
         "classification_report": classification_report(
             y_test, predictions, labels=[0, 1],
@@ -69,7 +79,7 @@ def evaluate_model(
     fig.savefig(figures_dir / "model_confusion_matrix.png", dpi=140)
     plt.close(fig)
 
-    false_positive, true_positive, _ = roc_curve(y_test, probabilities)
+    false_positive, true_positive, _ = roc_curve(y_test, scores)
     fig, ax = plt.subplots(figsize=(6, 5), layout="constrained")
     ax.plot(false_positive, true_positive, label=f"ROC-AUC = {metrics['roc_auc']:.3f}")
     ax.plot([0, 1], [0, 1], "--", color="gray", label="Random ranking")
@@ -79,7 +89,7 @@ def evaluate_model(
     fig.savefig(figures_dir / "model_roc.png", dpi=140)
     plt.close(fig)
 
-    precision, recall, _ = precision_recall_curve(y_test, probabilities)
+    precision, recall, _ = precision_recall_curve(y_test, scores)
     fig, ax = plt.subplots(figsize=(6, 5), layout="constrained")
     ax.step(recall, precision, where="post",
             label=f"Average precision = {metrics['pr_auc_average_precision']:.3f}")

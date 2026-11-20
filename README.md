@@ -137,17 +137,24 @@ python -m src.models.train
 ```
 
 The command reuses the established stratified split and preprocessing.
-Balanced logistic regression and random forest are compared using five
-stratified training folds; mean excluded-class F1 selects the model, with
-recall as the tie-breaker. The selected model is evaluated once on the held-out
-test partition at the default 0.5 threshold. Results, settings and figures
+Logistic regression, random forest, XGBoost and an RBF SVM are compared using
+five stratified training folds; mean excluded-class F1 selects the model, with
+recall as the tie-breaker. All four handle imbalance using weights fitted
+within each training fold. SVM ranking uses decision scores rather than
+probabilities. The selected model is evaluated on the held-out partition at
+its default decision threshold. Results, settings and figures
 are written under `reports/`; the fitted pipeline is saved as
 `artifacts/financial_exclusion_pipeline.joblib`. Only load Joblib artifacts
 from trusted sources, using compatible recorded package versions. The output
 is unweighted and is not a national or causal estimate; survey design and
 the provider's target derivation remain unresolved.
-The held-out results should not be used to revise model selection or tune the
-threshold; doing so would invalidate their role as an untouched assessment.
+The selected SVM stores transformed training observations as support vectors;
+keep its fitted artifact local and do not commit it. The pipeline provides
+`predict` and `decision_function`, not calibrated probabilities.
+The same held-out partition was evaluated in the earlier two-model experiment.
+It is reused with researcher approval, but is no longer a pristine independent
+assessment; do not use its results to revise model selection or tune the
+threshold.
 
 ## Project structure
 
@@ -156,8 +163,8 @@ threshold; doing so would invalidate their role as an untouched assessment.
 - `data/interim/`, `data/processed/`: generated datasets; ignored by Git and Docker.
 - `documentation/`: data dictionary and methodology records.
 - `notebooks/`: exploratory work only; implementation logic belongs in `src/`.
-- `reports/`, `artifacts/`: generated outputs, ignored by default; the requested
-  Phase 7 and Phase 8 deliverables are explicitly tracked.
+- `reports/`, `artifacts/`: generated outputs, ignored by default; requested
+  reports and figures are tracked, while the fitted model is kept local.
 - `tests/`: automated checks.
 
 ## Setup
