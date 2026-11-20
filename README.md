@@ -268,6 +268,12 @@ data-governance controls. Configure these and assess prediction/model-inference
 privacy risks before any external or production deployment; do not expose the
 local model artifact, which contains support vectors.
 
+## Prediction frontend
+
+The React demonstration connects to the local API through a Vite proxy without
+changing the API. See [frontend/README.md](frontend/README.md) for setup,
+configuration, tests and deployment limitations.
+
 ## Project structure
 
 - `src/financial_exclusion/`: importable application package, configuration, and data, feature, model, evaluation, and API modules.
