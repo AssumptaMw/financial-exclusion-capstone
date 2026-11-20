@@ -1,4 +1,8 @@
+<!-- BEGIN GENERATED PREPARATION RESULTS -->
 # FinAccess data cleaning and preparation report
+
+> Automatically generated preparation results; manual findings follow the
+> generated section.
 
 Generated (UTC): 2026-11-19T07:54:30.130812+00:00
 
@@ -88,6 +92,12 @@ Parquet nulls are counted separately from preserved Excel error strings such as 
 - Interim input SHA-256 after preparation: `bf12f1121bf08fadda74e111078744d8b3ef2aa89a3bff7ea09b3cd1fb998d41`.
 - Interim input unchanged: **True**.
 - Prepared Parquet size: 515,741 bytes.
+<!-- END GENERATED PREPARATION RESULTS -->
+
+## Manually maintained investigation findings
+
+The following investigation and modeling findings are maintained separately
+from the generated preparation results above.
 
 ## Follow-up investigation: workbook metadata and questionnaire
 

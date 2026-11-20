@@ -80,6 +80,11 @@ audit at `reports/results/data_cleaning_report.md`. Preparation applies only
 the approved 18+ restriction using `A18`; it treats that field's documented
 98/99 special responses separately, retains other values and all response
 labels/errors unchanged, and records the row counts and field-level audit.
+Only the report section between the generated-section markers is refreshed;
+manual investigation findings outside those markers are preserved. An existing
+report with missing or malformed markers is rejected rather than overwritten.
+Manual findings are not regenerated and should be reviewed against refreshed
+results if the input changes.
 The interim Parquet is not modified. This adult-only response file remains an
 unmodified response table: target construction and predictor selection happen
 in the next step. Survey-design mappings still require verification.

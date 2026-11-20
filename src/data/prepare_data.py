@@ -30,6 +30,8 @@ AGE_COLUMN = "A18"
 AGE_SPECIAL_CODES = {98: "Don't know", 99: "Refused"}
 BATCH_SIZE = 1_000
 EXCEL_ERROR_PREFIX = "#"
+REPORT_GENERATED_START = "<!-- BEGIN GENERATED PREPARATION RESULTS -->"
+REPORT_GENERATED_END = "<!-- END GENERATED PREPARATION RESULTS -->"
 
 
 def _sha256(path: Path) -> str:
@@ -166,6 +168,9 @@ def _render_report(
     adult_count = metadata["retained_adults"]
     lines = [
         "# FinAccess data cleaning and preparation report",
+        "",
+        "> Automatically generated preparation results; manual findings follow "
+        "the generated section.",
         "",
         f"Generated (UTC): {metadata['prepared_at_utc']}",
         "",
@@ -352,6 +357,28 @@ def _render_report(
     return "\n".join(lines)
 
 
+def _merge_report(existing: str | None, generated: str) -> str:
+    section = (
+        f"{REPORT_GENERATED_START}\n{generated.rstrip()}\n"
+        f"{REPORT_GENERATED_END}"
+    )
+    if existing is None:
+        return section + "\n"
+    if (
+        existing.count(REPORT_GENERATED_START) != 1
+        or existing.count(REPORT_GENERATED_END) != 1
+    ):
+        raise ValueError(
+            "Existing report must contain exactly one pair of generated section markers; "
+            "refusing to replace the report."
+        )
+    start = existing.index(REPORT_GENERATED_START)
+    end = existing.index(REPORT_GENERATED_END)
+    if end < start:
+        raise ValueError("Existing report has reversed generated section markers.")
+    return existing[:start] + section + existing[end + len(REPORT_GENERATED_END):]
+
+
 def prepare_data(
     source: Path = PARQUET_PATH,
     destination: Path = PREPARED_PATH,
@@ -365,8 +392,12 @@ def prepare_data(
         raise FileNotFoundError(f"Interim Parquet dataset does not exist: {source}")
     if source.resolve() == destination.resolve():
         raise ValueError("The prepared destination must not replace the interim source.")
+    if source.resolve() == report_path.resolve():
+        raise ValueError("The report path must not replace the interim source.")
     if destination.resolve() == report_path.resolve():
         raise ValueError("The Parquet destination and report path must differ.")
+    if report_path.exists():
+        _merge_report(report_path.read_bytes().decode("utf-8"), "")
 
     source_sha256 = _sha256(source)
     input_file = pq.ParquetFile(source)
@@ -472,7 +503,7 @@ def prepare_data(
 
     prepared_profile = _profile(destination)
     input_file.close()
-    report = _render_report(
+    generated_report = _render_report(
         source=source,
         destination=destination,
         source_profile=source_profile,
@@ -480,8 +511,12 @@ def prepare_data(
         metadata=preparation,
         source_sha256=source_sha256,
     )
+    existing_report = (
+        report_path.read_bytes().decode("utf-8") if report_path.exists() else None
+    )
+    report = _merge_report(existing_report, generated_report)
     report_temp = report_path.with_name(report_path.name + ".tmp")
-    report_temp.write_text(report, encoding="utf-8")
+    report_temp.write_bytes(report.encode("utf-8"))
     os.replace(report_temp, report_path)
     LOGGER.info(
         "Prepared %s of %s records; excluded %s under-18 and %s age-special records",

@@ -8,6 +8,8 @@ from src.data.convert_to_parquet import METADATA_KEY
 from src.data.load_data import SELECTED_COLUMNS
 from src.data.prepare_data import (
     PREPARATION_METADATA_KEY,
+    REPORT_GENERATED_END,
+    REPORT_GENERATED_START,
     prepare_data,
 )
 
@@ -123,3 +125,53 @@ def test_prepare_rejects_unverified_interim_and_does_not_publish(tmp_path):
 
     assert destination.read_bytes() == b"existing output"
     assert not report.exists()
+
+
+def test_prepare_refreshes_generated_report_without_overwriting_investigation(tmp_path):
+    source = tmp_path / "interim.parquet"
+    destination = tmp_path / "adults.parquet"
+    report = tmp_path / "data_cleaning_report.md"
+    write_interim(source)
+    prepare_data(source, destination, report)
+    manual = "\r\n## Investigation findings\r\n\r\nEvidence remains: café.\r\n"
+    prefix = "Manual introduction.\r\n\r\n"
+    report.write_bytes(
+        (prefix + report.read_bytes().decode("utf-8") + manual).encode("utf-8")
+    )
+    write_interim(source, ages=(18, 19, 20))
+
+    prepare_data(source, destination, report)
+
+    updated = report.read_bytes().decode("utf-8")
+    assert updated.startswith(prefix)
+    assert updated.endswith(manual)
+    assert "Input records: 3" in updated
+    assert "Input records: 6" not in updated
+    assert updated.count("## Investigation findings") == 1
+    assert updated.count(REPORT_GENERATED_START) == 1
+    assert updated.count(REPORT_GENERATED_END) == 1
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        "# Existing report\n\n## Investigation\nPreserve me.\n",
+        f"{REPORT_GENERATED_START}\n## Findings\n",
+        f"{REPORT_GENERATED_END}\n{REPORT_GENERATED_START}\n",
+        f"{REPORT_GENERATED_START}\n{REPORT_GENERATED_START}\n{REPORT_GENERATED_END}\n",
+    ],
+)
+def test_prepare_rejects_invalid_report_without_modifying_outputs(tmp_path, content):
+    source = tmp_path / "interim.parquet"
+    destination = tmp_path / "adults.parquet"
+    report = tmp_path / "data_cleaning_report.md"
+    write_interim(source)
+    destination.write_bytes(b"existing dataset")
+    report.write_text(content, encoding="utf-8")
+    original_report = report.read_bytes()
+
+    with pytest.raises(ValueError, match="generated section markers"):
+        prepare_data(source, destination, report)
+
+    assert report.read_bytes() == original_report
+    assert destination.read_bytes() == b"existing dataset"
