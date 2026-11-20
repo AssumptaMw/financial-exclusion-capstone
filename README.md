@@ -117,6 +117,16 @@ Preprocessing treats undocumented `A20=95` as missing and imputes it using the
 training mode; numeric income is median-imputed using training data. Original
 values remain unchanged in the Parquet files.
 
+## Exploratory analysis
+
+From the project root, run `python -m src.data.eda` or run
+`notebooks/01_data_exploration.ipynb` with the project root as its working
+directory. The EDA uses only the existing stratified training partition, writes
+`reports/results/eda_report.md` and figures under `reports/figures/`, and makes
+no feature-selection decisions. Percentages are unweighted sample
+descriptions, not national estimates or causal findings. Install the
+development requirements for notebook and plotting dependencies.
+
 ## Project structure
 
 - `src/financial_exclusion/`: importable application package, configuration, and data, feature, model, evaluation, and API modules.
