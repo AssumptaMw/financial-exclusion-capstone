@@ -1,0 +1,522 @@
+{
+  "model_sha256": "28157bb0ec77224bc964532e5ed3b92645115afde65a2a1e026678640a7e319b",
+  "dataset_sha256": "1eea7fbe7d2818856e391fc8eb38bde72ef4a925c88246a94af7df5d5c06caf8",
+  "explainer": "shap.KernelExplainer",
+  "shap_version": "0.49.1",
+  "score": "SVC decision_function; positive margins favor excluded class 1",
+  "background": {
+    "source": "training",
+    "size": 24,
+    "seed": 42
+  },
+  "global_sample": {
+    "source": "training",
+    "size": 64,
+    "disjoint_from_background": true
+  },
+  "coalition_samples": 128,
+  "l1_reg": 0.0,
+  "expected_margin": -0.9585198340097008,
+  "global_mean_absolute_shap": {
+    "S1": 0.42285091235906574,
+    "ID_card": 0.1301889816899823,
+    "A18": 0.08966467461926891,
+    "county": 0.07219977780942477,
+    "A20": 0.0647840889462215,
+    "B3Ii": 0.046700785427891384,
+    "S3": 0.04291437647274289,
+    "A08": 0.02538109927197452,
+    "A24iii": 0.021350791948002223,
+    "Sex": 0.02065514683954372,
+    "A24i": 0.018385153362275128,
+    "B3A__4": 0.017799896115838935,
+    "B3A__2": 0.01316544826215812,
+    "A24ii": 0.010282931102426247,
+    "A24iv": 0.008785782282214927,
+    "A24vi": 0.007336936443576613,
+    "A24v": 0.0010001221360253284
+  },
+  "local": {
+    "profile": "synthetic per-variable modes among training rows predicted excluded; no raw values saved",
+    "predicted_class": 1,
+    "margin": 1.0032415728328432,
+    "shap_values": {
+      "A18": 0.11298690682490109,
+      "Sex": 0.011925774243060664,
+      "A20": 0.05334229436816063,
+      "county": 0.06101955603163333,
+      "A08": -0.0270063913574476,
+      "B3A__2": 0.017925053108624685,
+      "B3A__4": -0.006404435237298252,
+      "B3Ii": 0.06858136841594485,
+      "ID_card": 0.0,
+      "S1": 1.5878388559012444,
+      "S3": 0.042353216871335995,
+      "A24i": 0.009959309675513447,
+      "A24ii": -0.0007776544632022587,
+      "A24iii": 0.026225129374662065,
+      "A24iv": 0.0037924230854109453,
+      "A24v": 0.0,
+      "A24vi": 0.0
+    }
+  },
+  "max_additivity_residual": 4.440892098500626e-16,
+  "transformed_feature_mapping": [
+    {
+      "transformed_feature": "numeric__A18",
+      "source_variable": "A18"
+    },
+    {
+      "transformed_feature": "numeric__B3Ii",
+      "source_variable": "B3Ii"
+    },
+    {
+      "transformed_feature": "numeric__missingindicator_B3Ii",
+      "source_variable": "B3Ii"
+    },
+    {
+      "transformed_feature": "categorical__Sex_Female",
+      "source_variable": "Sex"
+    },
+    {
+      "transformed_feature": "categorical__Sex_Male",
+      "source_variable": "Sex"
+    },
+    {
+      "transformed_feature": "categorical__A20_\"Don't know (DO NOT READ OUT)\"",
+      "source_variable": "A20"
+    },
+    {
+      "transformed_feature": "categorical__A20_\"None \"",
+      "source_variable": "A20"
+    },
+    {
+      "transformed_feature": "categorical__A20_\"Other (Specify) \"",
+      "source_variable": "A20"
+    },
+    {
+      "transformed_feature": "categorical__A20_\"Primary completed\"",
+      "source_variable": "A20"
+    },
+    {
+      "transformed_feature": "categorical__A20_\"Refused to Answer (DO NOT READ OUT)\"",
+      "source_variable": "A20"
+    },
+    {
+      "transformed_feature": "categorical__A20_\"Secondary completed \"",
+      "source_variable": "A20"
+    },
+    {
+      "transformed_feature": "categorical__A20_\"Some primary \"",
+      "source_variable": "A20"
+    },
+    {
+      "transformed_feature": "categorical__A20_\"Some secondary\"",
+      "source_variable": "A20"
+    },
+    {
+      "transformed_feature": "categorical__A20_\"University completed \"",
+      "source_variable": "A20"
+    },
+    {
+      "transformed_feature": "categorical__A20_Completed technical training after secondary school",
+      "source_variable": "A20"
+    },
+    {
+      "transformed_feature": "categorical__A20_Some technical training after secondary school",
+      "source_variable": "A20"
+    },
+    {
+      "transformed_feature": "categorical__A20_Some university",
+      "source_variable": "A20"
+    },
+    {
+      "transformed_feature": "categorical__county_Baringo",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Bomet",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Bungoma",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Busia",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Elgeyo-Marakwet",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Embu",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Garissa",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Homabay",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Isiolo",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Kajiado",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Kakamega",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Kericho",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Kiambu",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Kilifi",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Kirinyaga",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Kisii",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Kisumu",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Kitui",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Kwale",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Laikipia",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Lamu",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Machakos",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Makueni",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Mandera",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Marsabit",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Meru",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Migori",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Mombasa",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Murang'a",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Nairobi City",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Nakuru",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Nandi",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Narok",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Nyamira",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Nyandarua",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Nyeri",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Samburu",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Siaya",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Taita-Taveta",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Tana River",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Tharaka-Nithi",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Trans Nzoia",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Turkana",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Uasin Gishu",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Vihiga",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_Wajir",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__county_West Pokot",
+      "source_variable": "county"
+    },
+    {
+      "transformed_feature": "categorical__A08_Rural",
+      "source_variable": "A08"
+    },
+    {
+      "transformed_feature": "categorical__A08_Urban",
+      "source_variable": "A08"
+    },
+    {
+      "transformed_feature": "categorical__B3A__2_0",
+      "source_variable": "B3A__2"
+    },
+    {
+      "transformed_feature": "categorical__B3A__2_1",
+      "source_variable": "B3A__2"
+    },
+    {
+      "transformed_feature": "categorical__B3A__4_0",
+      "source_variable": "B3A__4"
+    },
+    {
+      "transformed_feature": "categorical__B3A__4_1",
+      "source_variable": "B3A__4"
+    },
+    {
+      "transformed_feature": "categorical__ID_card_Has ID (National Identity Card (ID),Passport,Alien ID)",
+      "source_variable": "ID_card"
+    },
+    {
+      "transformed_feature": "categorical__ID_card_No ID",
+      "source_variable": "ID_card"
+    },
+    {
+      "transformed_feature": "categorical__S1_#NULL!",
+      "source_variable": "S1"
+    },
+    {
+      "transformed_feature": "categorical__S1_I donâ€™t own a mobile phone but am able to use someone elseâ€™s phone regularly",
+      "source_variable": "S1"
+    },
+    {
+      "transformed_feature": "categorical__S1_I donâ€™t own or use a mobile phone/Sina wala situmii simu ya mkononi",
+      "source_variable": "S1"
+    },
+    {
+      "transformed_feature": "categorical__S1_I own a mobile phone that both me and others use/Nina simu ya mkononi ambayo mim",
+      "source_variable": "S1"
+    },
+    {
+      "transformed_feature": "categorical__S1_I own a mobile that only I use/Nina simu ambayo ni mimi tu ninaitumia",
+      "source_variable": "S1"
+    },
+    {
+      "transformed_feature": "categorical__S1_Refused to Answer (DO NOT READ OUT)/Kataa kujibu",
+      "source_variable": "S1"
+    },
+    {
+      "transformed_feature": "categorical__S3_#NULL!",
+      "source_variable": "S3"
+    },
+    {
+      "transformed_feature": "categorical__S3_Daily/\"Kila siku\"",
+      "source_variable": "S3"
+    },
+    {
+      "transformed_feature": "categorical__S3_Less ofteN/Mara kwa mara\"",
+      "source_variable": "S3"
+    },
+    {
+      "transformed_feature": "categorical__S3_Monthly/Mara moja kwa mwezi\"",
+      "source_variable": "S3"
+    },
+    {
+      "transformed_feature": "categorical__S3_Never/Situmii\"",
+      "source_variable": "S3"
+    },
+    {
+      "transformed_feature": "categorical__S3_Refused to Answer/Kataa kujibu",
+      "source_variable": "S3"
+    },
+    {
+      "transformed_feature": "categorical__S3_Weekly/Kila wiki\"",
+      "source_variable": "S3"
+    },
+    {
+      "transformed_feature": "categorical__A24i_#NULL!",
+      "source_variable": "A24i"
+    },
+    {
+      "transformed_feature": "categorical__A24i_Cannot do at all",
+      "source_variable": "A24i"
+    },
+    {
+      "transformed_feature": "categorical__A24i_No- no difficulty",
+      "source_variable": "A24i"
+    },
+    {
+      "transformed_feature": "categorical__A24i_Yes - a lot of difficulty",
+      "source_variable": "A24i"
+    },
+    {
+      "transformed_feature": "categorical__A24i_Yes - some difficulty",
+      "source_variable": "A24i"
+    },
+    {
+      "transformed_feature": "categorical__A24ii_#NULL!",
+      "source_variable": "A24ii"
+    },
+    {
+      "transformed_feature": "categorical__A24ii_Cannot do at all",
+      "source_variable": "A24ii"
+    },
+    {
+      "transformed_feature": "categorical__A24ii_No- no difficulty",
+      "source_variable": "A24ii"
+    },
+    {
+      "transformed_feature": "categorical__A24ii_Yes - a lot of difficulty",
+      "source_variable": "A24ii"
+    },
+    {
+      "transformed_feature": "categorical__A24ii_Yes - some difficulty",
+      "source_variable": "A24ii"
+    },
+    {
+      "transformed_feature": "categorical__A24iii_#NULL!",
+      "source_variable": "A24iii"
+    },
+    {
+      "transformed_feature": "categorical__A24iii_Cannot do at all",
+      "source_variable": "A24iii"
+    },
+    {
+      "transformed_feature": "categorical__A24iii_No- no difficulty",
+      "source_variable": "A24iii"
+    },
+    {
+      "transformed_feature": "categorical__A24iii_Yes - a lot of difficulty",
+      "source_variable": "A24iii"
+    },
+    {
+      "transformed_feature": "categorical__A24iii_Yes - some difficulty",
+      "source_variable": "A24iii"
+    },
+    {
+      "transformed_feature": "categorical__A24iv_Cannot do at all",
+      "source_variable": "A24iv"
+    },
+    {
+      "transformed_feature": "categorical__A24iv_No- no difficulty",
+      "source_variable": "A24iv"
+    },
+    {
+      "transformed_feature": "categorical__A24iv_Yes - a lot of difficulty",
+      "source_variable": "A24iv"
+    },
+    {
+      "transformed_feature": "categorical__A24iv_Yes - some difficulty",
+      "source_variable": "A24iv"
+    },
+    {
+      "transformed_feature": "categorical__A24v_#NULL!",
+      "source_variable": "A24v"
+    },
+    {
+      "transformed_feature": "categorical__A24v_Cannot do at all",
+      "source_variable": "A24v"
+    },
+    {
+      "transformed_feature": "categorical__A24v_No- no difficulty",
+      "source_variable": "A24v"
+    },
+    {
+      "transformed_feature": "categorical__A24v_Yes - a lot of difficulty",
+      "source_variable": "A24v"
+    },
+    {
+      "transformed_feature": "categorical__A24v_Yes - some difficulty",
+      "source_variable": "A24v"
+    },
+    {
+      "transformed_feature": "categorical__A24vi_#NULL!",
+      "source_variable": "A24vi"
+    },
+    {
+      "transformed_feature": "categorical__A24vi_Cannot do at all",
+      "source_variable": "A24vi"
+    },
+    {
+      "transformed_feature": "categorical__A24vi_No- no difficulty",
+      "source_variable": "A24vi"
+    },
+    {
+      "transformed_feature": "categorical__A24vi_Yes - a lot of difficulty",
+      "source_variable": "A24vi"
+    },
+    {
+      "transformed_feature": "categorical__A24vi_Yes - some difficulty",
+      "source_variable": "A24vi"
+    }
+  ]
+}

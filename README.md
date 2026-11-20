@@ -33,8 +33,8 @@ actual usage are distinct concepts.
 7. Produce confusion matrices and suitable SHAP explanations; interpret them as model associations, not causal effects.
 8. Package the approved preprocessing and model for FastAPI, load it once at application startup, and test the API and Docker deployment.
 
-Model comparison and held-out evaluation are implemented. Explainability and
-deployment remain future stages.
+Model comparison, held-out evaluation and training-only SHAP explanations are
+implemented. Deployment remains a future stage.
 
 ## Extract selected survey responses
 
@@ -155,6 +155,24 @@ The same held-out partition was evaluated in the earlier two-model experiment.
 It is reused with researcher approval, but is no longer a pristine independent
 assessment; do not use its results to revise model selection or tune the
 threshold.
+
+## Explain the selected model
+
+With the locally saved SVM pipeline and approved modeling Parquet present, run:
+
+```powershell
+python -m src.models.explain
+```
+
+Kernel SHAP explains the RBF SVM's class-1 decision margin through the entire
+fitted pipeline, grouping transformed columns by their 17 original variables.
+The background and global explanation sample come only from the established
+training partition. The report, transformed-feature mapping and figures are
+written under `reports/results/` and `reports/figures/`; the local example is
+a synthetic modal composite and does not export respondent values. SHAP values
+are approximate model associations, not probabilities, causal effects or
+national estimates. The small samples and independent masking of correlated
+predictors limit interpretation.
 
 ## Project structure
 

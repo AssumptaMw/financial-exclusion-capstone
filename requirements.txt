@@ -11,7 +11,7 @@ joblib
 xgboost
 
 # Explainability
-shap
+shap>=0.49.1
 
 # API
 fastapi

@@ -75,6 +75,18 @@ versions and results are saved alongside the experiment outputs.
 
 Use SHAP or another justified method compatible with the selected model. Report global and appropriate local explanations with limitations. Explanations describe model behavior and associations; they do not establish causal effects.
 
+The selected RBF SVM is explained with model-agnostic Kernel SHAP applied to
+the complete fitted pipeline's class-1 decision margin, not probabilities.
+Original input variables are masked as groups before preprocessing, keeping
+each variable's one-hot levels and missing indicator together. A reproducible,
+disjoint training-only background and global explanation sample are used; the
+local example is a synthetic composite of training modes among cases predicted
+excluded. The report records sample sizes, approximation budget, hashes and
+transformed-to-source mapping. Mean absolute SHAP values are unweighted
+descriptions of the selected sample. Independent masking can create
+implausible combinations and correlations can redistribute contributions;
+rankings may change with the sample and approximation settings.
+
 ## Deployment and reproducibility
 
 The API must use the same fitted preprocessing and model as training, load the approved artifact once at startup, and never train during a prediction request. Validate request fields and return informative errors. Build and test a Docker image without including the original workbook or generated datasets. Record software versions, configuration, seeds, model metadata, and the commands needed to reproduce results.
