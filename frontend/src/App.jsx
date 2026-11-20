@@ -95,8 +95,7 @@ function ExplanationSection({ explanation }) {
       )}
       <div className="explanation-disclaimer">
         <p>
-          <strong>Important:</strong> These explanations describe which characteristics the model found influential, not the causes of financial exclusion.
-          They reflect patterns in the training data and the model's learned behavior, not causal relationships.
+          These explanations show which characteristics the model found most influential in reaching its prediction. They describe statistical associations in the data, not causal factors or definitive reasons for financial inclusion or exclusion.
         </p>
       </div>
     </div>
@@ -116,15 +115,18 @@ function Results({ result, loading, resultRef }) {
       {result ? (
         <>
           <div className="result-label">{excluded ? 'Financially Excluded' : 'Financially Included'}</div>
-          <p>The model’s predicted classification for the responses provided.</p>
+          <p>Based on the information provided, the model predicts this classification.</p>
           <ExplanationSection explanation={result.explanation} />
+          <div className="prediction-interpretation">
+            <p><strong>How to interpret this result:</strong> This is a statistical estimate based on patterns in household survey data. It reflects the model's learned associations between respondent characteristics and financial exclusion, but should not be treated as a definitive assessment of anyone's actual financial status. Individual circumstances vary, and this prediction does not account for recent changes or personal factors not captured in the survey.</p>
+          </div>
         </>
       ) : (
         <p>{loading ? 'The model is processing your responses.' : 'Complete the form to see the model’s predicted classification.'}</p>
       )}
       <div className="result-note">
-        <strong>An estimate, not a verdict.</strong>
-        <span>Predictions are not definitive assessments of individuals and should not be used as the sole basis for decisions.</span>
+        <strong>Statistical estimate, not a final verdict.</strong>
+        <span>Predictions are estimates and should be considered alongside other information when making decisions.</span>
       </div>
     </section>
   );

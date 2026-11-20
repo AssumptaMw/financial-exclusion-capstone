@@ -119,6 +119,9 @@ h1, h2, h3, h4, p { margin-top: 0; }
 .contributor-bar-fill.negative { background: #5b8f82; }
 .explanation-disclaimer { background: #f5f9f7; border: 1px solid #e0e8e3; border-radius: 5px; padding: 12px; margin-top: 12px; }
 .explanation-disclaimer p { font-size: 11px; line-height: 1.6; color: #617870; margin: 0; }
+.prediction-interpretation { background: #f9f7f5; border: 1px solid #e8dfd8; border-radius: 5px; padding: 12px; margin-top: 16px; }
+.prediction-interpretation p { font-size: 11px; line-height: 1.6; color: #5d5856; margin: 0; }
+.prediction-interpretation strong { color: #39574e; display: block; margin-bottom: 6px; }
 .about-card .eyebrow { margin-bottom: 15px; }
 .about-card > p { margin-bottom: 0; }
 .about-divider { height: 1px; background: #e6ece8; margin: 20px 0; }

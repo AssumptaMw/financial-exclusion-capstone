@@ -11,7 +11,7 @@ import pandas as pd
 import shap
 from sklearn.pipeline import Pipeline
 
-from src.data.feature_engineering import PREDICTOR_COLUMNS
+from src.data.feature_engineering import MODELING_DATASET_PATH, PREDICTOR_COLUMNS
 from src.data.preprocessing import split_modeling_data
 from src.financial_exclusion.config import REPORTS_DIR
 from src.models.load_model import MODEL_PATH, load_svm
@@ -59,7 +59,7 @@ class LocalSHAPExplainer:
         """Load the model and prepare the background data."""
         try:
             self.model = load_svm(self.model_path)
-            X_train, _ = split_modeling_data(load_modeling_data(), train_size=0.8, random_state=42)
+            X_train, _, _, _ = split_modeling_data(load_modeling_data(MODELING_DATASET_PATH), test_size=0.2, random_state=42)
             if len(X_train) < self.background_size:
                 raise ValueError(f"Training data has {len(X_train)} rows; {self.background_size} required.")
             self.background = X_train.sample(n=self.background_size, random_state=42).reset_index(drop=True)
@@ -71,9 +71,17 @@ class LocalSHAPExplainer:
     def _get_or_create_explainer(self) -> shap.KernelExplainer:
         """Create a Kernel SHAP explainer lazily."""
         if self.explainer is None:
+            # Wrap decision_function to avoid SHAP trying to set feature_names_in_
+            def predict_fn(X: np.ndarray) -> np.ndarray:
+                """Wrapper that handles numpy array input from SHAP."""
+                if isinstance(X, np.ndarray):
+                    X = pd.DataFrame(X, columns=PREDICTOR_COLUMNS)
+                return self.model.decision_function(X)
+            
             self.explainer = shap.KernelExplainer(
-                self.model.decision_function,
-                self.background,
+                predict_fn,
+                self.background.values,  # Use numpy array for background
+                feature_names=list(PREDICTOR_COLUMNS),
             )
         return self.explainer
 
