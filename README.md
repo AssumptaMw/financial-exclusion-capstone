@@ -34,8 +34,8 @@ actual usage are distinct concepts.
 8. Package the approved preprocessing and model for FastAPI, load it once at application startup, and test the API and Docker deployment.
 
 Model comparison, held-out evaluation, training-only SHAP explanations and a
-local prediction API are implemented. Container deployment remains a future
-stage.
+local prediction API are implemented, together with a containerized
+demonstration.
 
 ## Extract selected survey responses
 
@@ -273,6 +273,56 @@ local model artifact, which contains support vectors.
 The React demonstration connects to the local API through a Vite proxy without
 changing the API. See [frontend/README.md](frontend/README.md) for setup,
 configuration, tests and deployment limitations.
+
+## Run the application with Docker Compose
+
+Install Docker Desktop with the Compose plugin and start its engine. Place the
+**trusted** compatible model file at
+`artifacts/financial_exclusion_pipeline.joblib`. It is not included in Git or
+the image: Compose mounts that file read-only into the backend. On Windows,
+ensure Docker Desktop can access its drive and the file is readable by the
+container. Joblib can execute code when loading; never mount an untrusted file.
+
+From the project root:
+
+```powershell
+docker compose config --quiet
+docker compose up --build -d
+docker compose ps
+```
+
+Open `http://127.0.0.1:8080/` for the frontend,
+`http://127.0.0.1:8080/api/health` for model readiness and
+`http://127.0.0.1:8080/docs` for Swagger UI. The UI sends `/api/predict` to
+Nginx, which forwards it to the backend's `/predict`; `/api/predict/batch` and
+`/api/docs` are also forwarded. Swagger uses `/openapi.json` and the backend's
+documented unprefixed endpoint paths, which Nginx forwards as well. The backend
+welcome endpoint is available at `/api/`; `/` serves the React application.
+Consequently, Swagger's unprefixed `GET /` opens the frontend rather than the
+backend welcome response. The backend is not published directly to the host.
+
+To use a model at another local path or change the frontend port, set these
+environment variables before starting Compose:
+
+```powershell
+$env:MODEL_FILE = 'C:\path\to\trusted\financial_exclusion_pipeline.joblib'
+$env:FRONTEND_PORT = '8081'
+docker compose up --build -d
+```
+
+The configured model file must exist; Compose will not create it. The API
+loads it once at startup and reports unhealthy if loading fails. The frontend
+waits for the backend health check; inspect failures with
+`docker compose logs backend`. Restart the service after replacing a model.
+Serving dependencies are pinned in `requirements-serving.txt` to the recorded
+model and tested API environment, but base images and transitive dependencies
+are not fully locked. Only use a model compatible with these versions.
+
+Stop this Compose project with `docker compose down`. The default published
+port binds to localhost only. This is a demonstration, not a production-secure
+deployment: authentication, TLS, rate limiting, privacy assessment and data
+governance remain necessary before external use. Predictions are estimates,
+not definitive individual assessments.
 
 ## Project structure
 

@@ -41,6 +41,10 @@ If another deployment path is needed, configure `VITE_API_BASE_URL` at build tim
 and configure the reverse proxy accordingly. Vite variables are embedded in
 the browser bundle; never place secrets in them.
 
+The root Docker Compose configuration builds this frontend with `/api` and
+serves it through Nginx, which proxies the API and Swagger paths. See the root
+README for container startup, the read-only local model mount and port settings.
+
 ## Validation and build
 
 ```powershell

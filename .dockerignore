@@ -13,7 +13,8 @@ frontend/dist/
 
 .env
 .env.*
-!.env.example
+**/.env
+**/.env.*
 secrets/
 .secrets/
 *.pem
@@ -29,6 +30,7 @@ notebooks/
 tests/
 reports/
 artifacts/
+materials/
 *.log
 *.tmp
 *.temp

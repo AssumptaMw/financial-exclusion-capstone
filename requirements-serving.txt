@@ -1,0 +1,11 @@
+# Versions used by the local fitted SVM and validated API environment.
+numpy==2.2.6
+pandas==2.3.3
+scipy==1.15.3
+scikit-learn==1.7.2
+joblib==1.6.0
+pyarrow==25.0.1
+openpyxl==3.1.5
+fastapi==0.162.5
+pydantic==2.14.3
+uvicorn==0.54.0
