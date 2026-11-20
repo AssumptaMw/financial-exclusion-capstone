@@ -2,7 +2,12 @@
 
 ## Status and scope
 
-This document describes the planned research and engineering workflow. No target, predictor set, extracted dataset, or trained model has been approved or implemented. The original workbook in `data/raw/` is immutable.
+This document describes the research and engineering workflow. The approved
+target, predictor set and adult modeling dataset are documented in
+`variable_selection.md`; the original workbook in `data/raw/` is immutable.
+Model comparison and held-out evaluation are implemented, while the provider's
+original classification derivation and the survey-design crosswalk remain
+unverified.
 
 ## Research questions and target
 
@@ -31,6 +36,28 @@ Use official documentation to identify the relevant survey weights, strata, prim
 ## Modeling and evaluation
 
 Compare suitable baseline and advanced classifiers after approving the outcome and predictors. Fix and record random seeds. Select models using an appropriate collection of metrics—not accuracy alone—including precision, recall, F1, ROC-AUC, and PR-AUC when appropriate. Report confusion matrices and document the threshold and weighting used for reported results. Consider calibration and class imbalance where appropriate to the research question and sampling design.
+
+### Implemented Phase 8 experiment
+
+The established stratified 80/20 split (seed 42) is reused. Logistic
+regression and random forest use balanced class weights and fixed settings,
+without resampling or hyperparameter tuning. Their complete preprocessing and
+estimators are fit separately in each of five shuffled stratified training
+folds (seed 42). The researcher approved selecting the highest mean F1 for the
+excluded class; mean recall breaks a tie, followed by the baseline in an exact
+tie. The selected pipeline is refit on all training data before a single
+held-out evaluation at the default 0.5 probability threshold.
+The held-out results must not be used to revise model selection or tune the
+threshold; such use would compromise their role as an untouched assessment.
+
+Precision, recall, F1, accuracy, ROC-AUC and PR-AUC are unweighted; PR-AUC is
+reported as average precision, a step-weighted area. The report includes a
+confusion matrix and classification report. These metrics describe this sample
+split, not national performance; neither the split nor cross-validation is
+verified as cluster-aware. Survey weights are not used in fitting or
+evaluation, and the proper design-aware estimand remains unresolved. The
+results are cross-sectional associations, not causal findings. Exact settings,
+versions and results are saved alongside the experiment outputs.
 
 ## Explainability
 

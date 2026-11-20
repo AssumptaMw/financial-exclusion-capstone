@@ -33,7 +33,8 @@ actual usage are distinct concepts.
 7. Produce confusion matrices and suitable SHAP explanations; interpret them as model associations, not causal effects.
 8. Package the approved preprocessing and model for FastAPI, load it once at application startup, and test the API and Docker deployment.
 
-Model training and deployment remain future stages.
+Model comparison and held-out evaluation are implemented. Explainability and
+deployment remain future stages.
 
 ## Extract selected survey responses
 
@@ -127,6 +128,27 @@ no feature-selection decisions. Percentages are unweighted sample
 descriptions, not national estimates or causal findings. Install the
 development requirements for notebook and plotting dependencies.
 
+## Train and evaluate models
+
+With the approved modeling Parquet present, run from the project root:
+
+```powershell
+python -m src.models.train
+```
+
+The command reuses the established stratified split and preprocessing.
+Balanced logistic regression and random forest are compared using five
+stratified training folds; mean excluded-class F1 selects the model, with
+recall as the tie-breaker. The selected model is evaluated once on the held-out
+test partition at the default 0.5 threshold. Results, settings and figures
+are written under `reports/`; the fitted pipeline is saved as
+`artifacts/financial_exclusion_pipeline.joblib`. Only load Joblib artifacts
+from trusted sources, using compatible recorded package versions. The output
+is unweighted and is not a national or causal estimate; survey design and
+the provider's target derivation remain unresolved.
+The held-out results should not be used to revise model selection or tune the
+threshold; doing so would invalidate their role as an untouched assessment.
+
 ## Project structure
 
 - `src/financial_exclusion/`: importable application package, configuration, and data, feature, model, evaluation, and API modules.
@@ -134,7 +156,8 @@ development requirements for notebook and plotting dependencies.
 - `data/interim/`, `data/processed/`: generated datasets; ignored by Git and Docker.
 - `documentation/`: data dictionary and methodology records.
 - `notebooks/`: exploratory work only; implementation logic belongs in `src/`.
-- `reports/`, `artifacts/`: generated outputs; not committed by default.
+- `reports/`, `artifacts/`: generated outputs, ignored by default; the requested
+  Phase 7 and Phase 8 deliverables are explicitly tracked.
 - `tests/`: automated checks.
 
 ## Setup

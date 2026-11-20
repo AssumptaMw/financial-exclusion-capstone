@@ -5,8 +5,9 @@
 The researcher approved the 18+ analysis population and predictor groups.
 Prompt 6B supersedes the earlier target choice: `financial_exclusion_status`
 is mapped from the exact observed labels in `Overall_Access_fnl`. The adult
-population and modeling dataset have been prepared, but no model has been fit.
-The provider's original classification methodology remains unverified.
+population and modeling dataset have been prepared, and Phase 8 compares
+models using the implemented predictor set. The provider's original
+classification methodology remains unverified.
 
 ## Official definition and approved outcome
 

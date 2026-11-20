@@ -1,0 +1,65 @@
+{
+  "dataset": "finaccess_modeling_dataset_6c.parquet",
+  "dataset_sha256": "1eea7fbe7d2818856e391fc8eb38bde72ef4a925c88246a94af7df5d5c06caf8",
+  "predictors": [
+    "A18",
+    "Sex",
+    "A20",
+    "county",
+    "A08",
+    "B3A__2",
+    "B3A__4",
+    "B3Ii",
+    "ID_card",
+    "S1",
+    "S3",
+    "A24i",
+    "A24ii",
+    "A24iii",
+    "A24iv",
+    "A24v",
+    "A24vi"
+  ],
+  "target": "financial_exclusion_status",
+  "train_rows": 15796,
+  "test_rows": 3950,
+  "split": {
+    "method": "stratified train_test_split",
+    "test_size": 0.2,
+    "random_state": 42
+  },
+  "cross_validation": {
+    "method": "StratifiedKFold",
+    "folds": 5,
+    "shuffle": true,
+    "random_state": 42
+  },
+  "selection": "highest mean CV F1 for class 1; recall breaks ties; baseline breaks exact ties",
+  "candidates": {
+    "logistic_regression": {
+      "class_weight": "balanced",
+      "max_iter": 1000,
+      "solver": "liblinear",
+      "random_state": 42
+    },
+    "random_forest": {
+      "class_weight": "balanced",
+      "n_estimators": 100,
+      "random_state": 42,
+      "n_jobs": -1
+    }
+  },
+  "decision_threshold": 0.5,
+  "positive_class": 1,
+  "pr_auc_definition": "average precision (step-weighted precision-recall area)",
+  "survey_weights_used": false,
+  "selected_model": "logistic_regression",
+  "versions": {
+    "python": "3.10.9",
+    "scikit_learn": "1.7.2",
+    "pandas": "2.3.3",
+    "numpy": "2.2.6",
+    "pyarrow": "25.0.1",
+    "joblib": "1.6.0"
+  }
+}
