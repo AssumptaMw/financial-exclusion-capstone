@@ -9,7 +9,8 @@ COPY requirements-serving.txt ./
 RUN pip install --no-cache-dir -r requirements-serving.txt
 
 COPY src/ ./src/
-RUN mkdir -p /app/artifacts
+RUN mkdir -p /app/artifacts /app/data/processed \
+    && chown -R 10001:10001 /app/artifacts /app/data
 
 USER 10001:10001
 EXPOSE 10000

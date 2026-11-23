@@ -475,14 +475,24 @@ packages or registry credentials. Render builds the UI against the API's public
 private-network traffic. If you change the API service name, update
 `API_UPSTREAM` in `render.yaml` to match its public URL.
 
-The model file is deliberately excluded from Git and Docker build contexts.
-The API service must have the trusted
-`financial_exclusion_pipeline.joblib` file available at
-`/app/artifacts/financial_exclusion_pipeline.joblib` at runtime. The Render
-free plan does not support persistent disks, so provide the artifact through a
-separate secure runtime source before deploying; otherwise the API remains
-unhealthy and the workflow fails at `/health`. Do not put the model or deploy
-hook URLs in the repository.
+The model and respondent-level modeling dataset stay out of Git and Docker
+build contexts. The API restores both from one Render secret file at startup.
+From the repository root, generate the private bundle with:
+
+```powershell
+python scripts/package_render_runtime_assets.py
+```
+
+In the API service's **Environment → Secret Files**, add a file named
+`financial-exclusion-runtime-assets.b64` and paste in the complete contents of
+`.secrets/financial-exclusion-runtime-assets.b64`. Render makes it available
+to the container at `/etc/secrets/financial-exclusion-runtime-assets.b64`.
+The current bundle is below Render's 1 MB combined secret-file limit. Keep it
+private and out of Git; it contains survey-derived respondent records. Repeat
+the packaging and upload steps whenever the model or modeling dataset changes.
+The API extracts the files to writable runtime directories before loading the
+model and SHAP background. Without this secret file, the API remains
+unavailable. Do not put the model, dataset or deploy hook URLs in the repository.
 
 The deployment workflow also performs a smoke prediction using a synthetic
 record. This confirms the live API and UI respond; it does not validate model

@@ -19,6 +19,7 @@ from src.financial_exclusion.api.schemas import (
 )
 from src.models.load_model import MODEL_PATH, load_svm
 from src.models.explain_prediction import LocalSHAPExplainer
+from src.financial_exclusion.runtime_assets import provision_runtime_assets
 
 LOGGER = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ async def lifespan(app: FastAPI):
     app.state.model = None
     app.state.explainer = None
     try:
+        provision_runtime_assets()
         app.state.model = load_svm(MODEL_PATH)
         app.state.explainer = LocalSHAPExplainer(MODEL_PATH)
     except Exception:
