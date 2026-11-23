@@ -227,6 +227,7 @@ def _render_report(
     s1_s2 = _cross_tab(source, "S1", "S2__1")
     s3_s4 = _cross_tab(source, "S3", "S4")
     s3_counts = source_profile["fields"]["S3"]["counts"]
+    s4_counts = source_profile["fields"]["S4"]["counts"]
     never_values = [
         value for value in s3_counts
         if isinstance(value, str) and value.startswith("Never/")
