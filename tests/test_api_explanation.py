@@ -27,6 +27,7 @@ def client(monkeypatch):
 
     monkeypatch.setattr(main, "load_svm", lambda model_path: TestModel())
     monkeypatch.setattr(main, "LocalSHAPExplainer", TestExplainer)
+    monkeypatch.setattr(main, "provision_runtime_assets", lambda: None)
     with TestClient(app) as test_client:
         yield test_client
 

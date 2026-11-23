@@ -46,6 +46,7 @@ class RecordingModel:
 def client(monkeypatch):
     model = RecordingModel()
     loads = []
+    monkeypatch.setattr(main, "provision_runtime_assets", lambda: None)
     monkeypatch.setattr(main, "load_svm", lambda path: loads.append(path) or model)
     with TestClient(main.app) as test_client:
         yield test_client, model, loads
@@ -104,6 +105,7 @@ def test_load_failure_keeps_health_and_predictions_unavailable(monkeypatch, reco
     def broken_loader(path):
         raise FileNotFoundError("sensitive local path")
 
+    monkeypatch.setattr(main, "provision_runtime_assets", lambda: None)
     monkeypatch.setattr(main, "load_svm", broken_loader)
     with TestClient(main.app) as client:
         assert client.get("/").status_code == 200
