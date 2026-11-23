@@ -3,12 +3,30 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from src.data.feature_engineering import PREDICTOR_COLUMNS
+from src.financial_exclusion.api import main
 from src.financial_exclusion.api.main import app
 
 
 @pytest.fixture
-def client():
-    """Create a test client for the FastAPI app."""
+def client(monkeypatch):
+    """Use deterministic test doubles instead of requiring local model artifacts."""
+    class TestModel:
+        def predict(self, frame):
+            return [0] * len(frame)
+
+        def decision_function(self, frame):
+            return [-0.25] * len(frame)
+
+    class TestExplainer:
+        def __init__(self, model_path):
+            pass
+
+        def explain(self, frame):
+            return {column: float(index) for index, column in enumerate(PREDICTOR_COLUMNS)}
+
+    monkeypatch.setattr(main, "load_svm", lambda model_path: TestModel())
+    monkeypatch.setattr(main, "LocalSHAPExplainer", TestExplainer)
     with TestClient(app) as test_client:
         yield test_client
 
