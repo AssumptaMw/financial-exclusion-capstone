@@ -2,7 +2,6 @@ services:
   - type: web
     name: financial-exclusion-api
     runtime: image
-    plan: free
     image:
       url: ghcr.io/assumptamw/financial-exclusion-capstone-api:main
       creds:
@@ -13,7 +12,6 @@ services:
   - type: web
     name: financial-exclusion-ui
     runtime: image
-    plan: free
     image:
       url: ghcr.io/assumptamw/financial-exclusion-capstone-frontend:main
       creds:
