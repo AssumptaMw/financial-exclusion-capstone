@@ -2,8 +2,6 @@
 
 import pandas as pd
 import pytest
-from pathlib import Path
-
 from src.models.explain_prediction import LocalSHAPExplainer, explain_prediction, FEATURE_LABELS
 from src.data.feature_engineering import PREDICTOR_COLUMNS
 

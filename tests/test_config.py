@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from financial_exclusion import config
 
 
