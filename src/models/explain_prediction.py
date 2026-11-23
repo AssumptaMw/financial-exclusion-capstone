@@ -10,9 +10,9 @@ import pandas as pd
 import shap
 
 from src.data.feature_engineering import MODELING_DATASET_PATH, PREDICTOR_COLUMNS
+from src.data.model_dataset import load_modeling_data
 from src.data.preprocessing import split_modeling_data
 from src.models.load_model import load_svm
-from src.models.train import load_modeling_data
 
 LOGGER = logging.getLogger(__name__)
 

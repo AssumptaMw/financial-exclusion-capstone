@@ -14,7 +14,6 @@ import joblib
 import numpy as np
 import pandas as pd
 import pyarrow
-import pyarrow.parquet as pq
 import sklearn
 import xgboost
 from sklearn.ensemble import RandomForestClassifier
@@ -24,11 +23,11 @@ from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 
 from src.data.feature_engineering import (
-    MODEL_METADATA_KEY,
     MODELING_DATASET_PATH,
     PREDICTOR_COLUMNS,
     TARGET_COLUMN,
 )
+from src.data.model_dataset import load_modeling_data
 from src.data.preprocessing import build_model_pipeline, split_modeling_data
 from src.financial_exclusion.config import ARTIFACTS_DIR, RANDOM_SEED, REPORTS_DIR
 from src.models.estimators import BalancedXGBClassifier
@@ -43,23 +42,6 @@ SCORING = {
     "roc_auc": "roc_auc",
     "pr_auc_average_precision": "average_precision",
 }
-
-
-def load_modeling_data(path: Path) -> pd.DataFrame:
-    """Load the approved model dataset and verify its provenance."""
-    path = Path(path)
-    if not path.is_file():
-        raise FileNotFoundError(f"Modeling dataset does not exist: {path}")
-    table = pq.read_table(path)
-    metadata = table.schema.metadata or {}
-    if MODEL_METADATA_KEY not in metadata:
-        raise ValueError("Modeling dataset is missing predictor provenance metadata.")
-    provenance = json.loads(metadata[MODEL_METADATA_KEY])
-    if provenance.get("predictors") != list(PREDICTOR_COLUMNS):
-        raise ValueError("Modeling dataset predictors do not match the approved feature list.")
-    if provenance.get("target_column") != TARGET_COLUMN:
-        raise ValueError("Modeling dataset target does not match the approved target.")
-    return table.to_pandas()
 
 
 def train_candidates(

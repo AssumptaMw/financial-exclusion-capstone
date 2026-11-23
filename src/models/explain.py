@@ -20,10 +20,10 @@ import shap
 from sklearn.pipeline import Pipeline
 
 from src.data.feature_engineering import MODELING_DATASET_PATH, PREDICTOR_COLUMNS
+from src.data.model_dataset import load_modeling_data
 from src.data.preprocessing import CATEGORICAL_FEATURES, NUMERIC_FEATURES, split_modeling_data
 from src.financial_exclusion.config import RANDOM_SEED, REPORTS_DIR
 from src.models.load_model import MODEL_PATH, load_svm
-from src.models.train import load_modeling_data
 
 LOGGER = logging.getLogger(__name__)
 RESULTS_DIR = REPORTS_DIR / "results"
