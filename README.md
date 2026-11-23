@@ -464,8 +464,8 @@ Before enabling deployment, configure the following in the repository's
 | --- | --- | --- |
 | `RENDER_API_DEPLOY_HOOK_URL` | Secret | Deploy hook URL for the API Render service |
 | `RENDER_UI_DEPLOY_HOOK_URL` | Secret | Deploy hook URL for the frontend Render service |
-| `RENDER_API_URL` | Variable | Public API base URL, without a trailing slash or `/api` suffix |
-| `RENDER_UI_URL` | Variable | Public frontend base URL |
+| `RENDER_API_URL` | Variable or Secret | Public API base URL, without a trailing slash or `/api` suffix |
+| `RENDER_UI_URL` | Variable or Secret | Public frontend base URL |
 
 In Render, connect the Blueprint to this GitHub repository and deploy the
 `main` branch. The Blueprint defines Docker-based services named
