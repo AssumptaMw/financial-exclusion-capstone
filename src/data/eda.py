@@ -23,7 +23,6 @@ from src.data.feature_engineering import (
     MODEL_METADATA_KEY,
     MODELING_DATASET_PATH,
     PREDICTOR_COLUMNS,
-    TARGET_COLUMN,
 )
 from src.data.preprocessing import _coerce_numeric, split_modeling_data
 from src.financial_exclusion.config import RANDOM_SEED, REPORTS_DIR

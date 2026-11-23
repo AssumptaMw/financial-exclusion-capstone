@@ -448,6 +448,46 @@ deployment: authentication, TLS, rate limiting, privacy assessment and data
 governance remain necessary before external use. Predictions are estimates,
 not definitive individual assessments.
 
+## CI/CD and Render deployment
+
+`.github/workflows/ci.yml` runs Ruff, the Python test suite, and API/frontend
+Docker image builds for pull requests. Connect the Render services to this
+GitHub repository; Render builds the API and UI directly from `Dockerfile` and
+`frontend/Dockerfile`. `.github/workflows/deploy.yml` triggers their Render
+deploy hooks on pushes to `main`, waits for API readiness at `/health`, then
+checks the API docs, a synthetic prediction, and the served frontend page.
+
+Before enabling deployment, configure the following in the repository's
+**Settings → Secrets and variables → Actions**:
+
+| Name | Type | Value |
+| --- | --- | --- |
+| `RENDER_API_DEPLOY_HOOK_URL` | Secret | Deploy hook URL for the API Render service |
+| `RENDER_UI_DEPLOY_HOOK_URL` | Secret | Deploy hook URL for the frontend Render service |
+| `RENDER_API_URL` | Variable | Public API base URL, without a trailing slash or `/api` suffix |
+| `RENDER_UI_URL` | Variable | Public frontend base URL |
+
+In Render, connect the Blueprint to this GitHub repository and deploy the
+`main` branch. The Blueprint defines Docker-based services named
+`financial-exclusion-api` and `financial-exclusion-ui`; it needs no GHCR
+packages or registry credentials. Render builds the UI against the API's public
+`onrender.com` URL, which also works with free web services that cannot receive
+private-network traffic. If you change the API service name, update
+`API_UPSTREAM` in `render.yaml` to match its public URL.
+
+The model file is deliberately excluded from Git and Docker build contexts.
+The API service must have the trusted
+`financial_exclusion_pipeline.joblib` file available at
+`/app/artifacts/financial_exclusion_pipeline.joblib` at runtime. The Render
+free plan does not support persistent disks, so provide the artifact through a
+separate secure runtime source before deploying; otherwise the API remains
+unhealthy and the workflow fails at `/health`. Do not put the model or deploy
+hook URLs in the repository.
+
+The deployment workflow also performs a smoke prediction using a synthetic
+record. This confirms the live API and UI respond; it does not validate model
+quality or produce a nationally representative result.
+
 ## Project structure
 
 - `src/data/`: workbook inspection, extraction, preparation, preprocessing and EDA.
