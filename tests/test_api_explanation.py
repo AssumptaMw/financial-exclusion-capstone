@@ -1,17 +1,16 @@
 """Integration tests for the prediction and explanation endpoint."""
 
-import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
 from src.financial_exclusion.api.main import app
-from src.data.feature_engineering import PREDICTOR_COLUMNS
 
 
 @pytest.fixture
 def client():
     """Create a test client for the FastAPI app."""
-    return TestClient(app)
+    with TestClient(app) as test_client:
+        yield test_client
 
 
 def get_valid_payload():

@@ -1,0 +1,132 @@
+name: Deploy to Render
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false
+
+jobs:
+  build-push-deploy-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate deployment configuration
+        env:
+          API_URL: ${{ vars.RENDER_API_URL }}
+          UI_URL: ${{ vars.RENDER_UI_URL }}
+          API_DEPLOY_HOOK: ${{ secrets.RENDER_API_DEPLOY_HOOK_URL }}
+          UI_DEPLOY_HOOK: ${{ secrets.RENDER_UI_DEPLOY_HOOK_URL }}
+        run: |
+          for name in API_URL UI_URL API_DEPLOY_HOOK UI_DEPLOY_HOOK; do
+            if [[ -z "${!name}" ]]; then
+              echo "Required GitHub variable or secret is missing: $name" >&2
+              exit 1
+            fi
+          done
+          [[ "$API_URL" == https://* && "$UI_URL" == https://* ]] || {
+            echo "RENDER_API_URL and RENDER_UI_URL must use HTTPS." >&2
+            exit 1
+          }
+
+      - name: Derive GHCR image names
+        id: images
+        run: echo "prefix=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ steps.images.outputs.prefix }}-api:${{ github.sha }}
+            ${{ steps.images.outputs.prefix }}-api:main
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.images.outputs.prefix }}-frontend:${{ github.sha }}
+            ${{ steps.images.outputs.prefix }}-frontend:main
+
+      - name: Trigger Render deploy hooks
+        env:
+          API_DEPLOY_HOOK: ${{ secrets.RENDER_API_DEPLOY_HOOK_URL }}
+          UI_DEPLOY_HOOK: ${{ secrets.RENDER_UI_DEPLOY_HOOK_URL }}
+          API_IMAGE: ${{ steps.images.outputs.prefix }}-api:${{ github.sha }}
+          UI_IMAGE: ${{ steps.images.outputs.prefix }}-frontend:${{ github.sha }}
+        run: |
+          trigger_deploy() {
+            local hook="$1"
+            local image="$2"
+            local code
+            code=$(curl --silent --output /dev/null --write-out '%{http_code}' \
+              --request POST --get --data-urlencode "imgURL=${image}" "$hook") || {
+              echo "Render deploy hook request failed." >&2
+              return 1
+            }
+            case "$code" in
+              200|202) ;;
+              *) echo "Render deploy hook returned HTTP $code." >&2; return 1 ;;
+            esac
+          }
+          trigger_deploy "$API_DEPLOY_HOOK" "$API_IMAGE"
+          trigger_deploy "$UI_DEPLOY_HOOK" "$UI_IMAGE"
+
+      - name: Wait for API readiness
+        env:
+          API_URL: ${{ vars.RENDER_API_URL }}
+        run: |
+          api_url="${API_URL%/}"
+          for attempt in $(seq 1 90); do
+            body=$(curl --silent --fail --max-time 15 "$api_url/health" || true)
+            if [[ "$(printf '%s' "$body" | jq -r '.status // empty' 2>/dev/null)" == "ready" ]]; then
+              echo "API health check passed."
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "API did not become ready at /health within 15 minutes." >&2
+          exit 1
+
+      - name: Smoke-test deployed API and frontend
+        env:
+          API_URL: ${{ vars.RENDER_API_URL }}
+          UI_URL: ${{ vars.RENDER_UI_URL }}
+        run: |
+          api_url="${API_URL%/}"
+          ui_url="${UI_URL%/}"
+
+          curl --silent --show-error --fail --max-time 30 "$api_url/docs" -o /dev/null
+          html=$(curl --silent --show-error --fail --max-time 30 "$ui_url/")
+          grep -qi '<title>FinAccess | Financial Exclusion Research</title>' <<< "$html"
+
+          prediction=$(curl --silent --show-error --fail --max-time 90 \
+            -H 'Content-Type: application/json' \
+            --data-raw '{"A18":35,"Sex":"Female","A20":"\"Secondary completed \"","county":"Nairobi City","A08":"Urban","B3A__2":1,"B3A__4":0,"B3Ii":10000,"ID_card":"No ID","S1":"I own a mobile that only I use/Nina simu ambayo ni mimi tu ninaitumia","S3":"Daily/\"Kila siku\"","A24i":"No- no difficulty","A24ii":"No- no difficulty","A24iii":"No- no difficulty","A24iv":"No- no difficulty","A24v":"No- no difficulty","A24vi":"No- no difficulty"}' \
+            "$api_url/predict")
+          jq -e '(.financial_exclusion_status == 0 and .label == "Financially included") or (.financial_exclusion_status == 1 and .label == "Financially excluded")' \
+            <<< "$prediction" >/dev/null
+          echo "API prediction, API docs, and frontend smoke checks passed."
