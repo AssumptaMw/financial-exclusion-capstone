@@ -20,17 +20,27 @@ jobs:
 
       - name: Validate deployment configuration
         env:
-          API_URL: ${{ vars.RENDER_API_URL }}
-          UI_URL: ${{ vars.RENDER_UI_URL }}
+          API_URL: ${{ vars.RENDER_API_URL || secrets.RENDER_API_URL }}
+          UI_URL: ${{ vars.RENDER_UI_URL || secrets.RENDER_UI_URL }}
           API_DEPLOY_HOOK: ${{ secrets.RENDER_API_DEPLOY_HOOK_URL }}
           UI_DEPLOY_HOOK: ${{ secrets.RENDER_UI_DEPLOY_HOOK_URL }}
         run: |
-          for name in API_URL UI_URL API_DEPLOY_HOOK UI_DEPLOY_HOOK; do
-            if [[ -z "${!name}" ]]; then
-              echo "Required GitHub variable or secret is missing: $name" >&2
-              exit 1
-            fi
-          done
+          [[ -n "$API_URL" ]] || {
+            echo "Missing RENDER_API_URL: add it as an Actions variable or secret." >&2
+            exit 1
+          }
+          [[ -n "$UI_URL" ]] || {
+            echo "Missing RENDER_UI_URL: add it as an Actions variable or secret." >&2
+            exit 1
+          }
+          [[ -n "$API_DEPLOY_HOOK" ]] || {
+            echo "Missing Actions secret RENDER_API_DEPLOY_HOOK_URL." >&2
+            exit 1
+          }
+          [[ -n "$UI_DEPLOY_HOOK" ]] || {
+            echo "Missing Actions secret RENDER_UI_DEPLOY_HOOK_URL." >&2
+            exit 1
+          }
           [[ "$API_URL" == https://* && "$UI_URL" == https://* ]] || {
             echo "RENDER_API_URL and RENDER_UI_URL must use HTTPS." >&2
             exit 1
