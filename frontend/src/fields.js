@@ -60,8 +60,8 @@ export const sections = [
     title: 'Livelihood & identification',
     description: 'Income sources refer to the past 12 months.',
     fields: [
-      { name: 'B3A__2', label: 'Employed income-source indicator', options: incomeIndicator, hint: 'Whether income was received from employment in the past 12 months (0=No, 1=Yes).' },
-      { name: 'B3A__4', label: 'Own business income-source indicator', options: incomeIndicator, hint: 'Whether income was received from running own business/self-employment in the past 12 months (0=No, 1=Yes).' },
+      { name: 'B3A__2', label: 'Employment income source', options: incomeIndicator, hint: 'Whether income was received from employment in the past 12 months (0=No, 1=Yes).' },
+      { name: 'B3A__4', label: 'Own-business income source', options: incomeIndicator, hint: 'Whether income was received from running own business/self-employment in the past 12 months (0=No, 1=Yes).' },
       { name: 'B3Ii', label: 'Total income last month', type: 'income', hint: 'In Kenyan shillings.' },
       { name: 'ID_card', label: 'Identification document', options: [
         option('Has ID (national ID, passport or alien ID)', 'Has ID (National Identity Card (ID),Passport,Alien ID)'),
