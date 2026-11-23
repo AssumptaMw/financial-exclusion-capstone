@@ -14,14 +14,15 @@ concurrency:
 jobs:
   build-push-deploy-smoke:
     runs-on: ubuntu-latest
+    env:
+      API_URL: ${{ vars.RENDER_API_URL || secrets.RENDER_API_URL }}
+      UI_URL: ${{ vars.RENDER_UI_URL || secrets.RENDER_UI_URL }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
       - name: Validate deployment configuration
         env:
-          API_URL: ${{ vars.RENDER_API_URL || secrets.RENDER_API_URL }}
-          UI_URL: ${{ vars.RENDER_UI_URL || secrets.RENDER_UI_URL }}
           API_DEPLOY_HOOK: ${{ secrets.RENDER_API_DEPLOY_HOOK_URL }}
           UI_DEPLOY_HOOK: ${{ secrets.RENDER_UI_DEPLOY_HOOK_URL }}
         run: |
@@ -68,8 +69,6 @@ jobs:
           trigger_deploy "$UI_DEPLOY_HOOK"
 
       - name: Wait for API readiness
-        env:
-          API_URL: ${{ vars.RENDER_API_URL }}
         run: |
           api_url="${API_URL%/}"
           for attempt in $(seq 1 90); do
@@ -84,9 +83,6 @@ jobs:
           exit 1
 
       - name: Smoke-test deployed API and frontend
-        env:
-          API_URL: ${{ vars.RENDER_API_URL }}
-          UI_URL: ${{ vars.RENDER_UI_URL }}
         run: |
           api_url="${API_URL%/}"
           ui_url="${UI_URL%/}"
