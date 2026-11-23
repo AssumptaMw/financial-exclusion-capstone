@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: financial-exclusion-api
+    runtime: docker
+    plan: free
+    branch: main
+    autoDeployTrigger: "off"
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+
+  - type: web
+    name: financial-exclusion-ui
+    runtime: docker
+    plan: free
+    branch: main
+    autoDeployTrigger: "off"
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+    envVars:
+      - key: API_UPSTREAM
+        value: https://financial-exclusion-api.onrender.com

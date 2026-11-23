@@ -2,19 +2,16 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import shap
-from sklearn.pipeline import Pipeline
 
 from src.data.feature_engineering import MODELING_DATASET_PATH, PREDICTOR_COLUMNS
 from src.data.preprocessing import split_modeling_data
-from src.financial_exclusion.config import REPORTS_DIR
-from src.models.load_model import MODEL_PATH, load_svm
+from src.models.load_model import load_svm
 from src.models.train import load_modeling_data
 
 LOGGER = logging.getLogger(__name__)
