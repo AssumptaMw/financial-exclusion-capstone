@@ -451,10 +451,11 @@ not definitive individual assessments.
 ## CI/CD and Render deployment
 
 `.github/workflows/ci.yml` runs Ruff, the Python test suite, and API/frontend
-Docker image builds for pull requests. `.github/workflows/deploy.yml` builds
-and pushes the API and frontend images to GHCR on pushes to `main`, triggers
-their Render deploy hooks, waits for API readiness at `/health`, then checks
-the API docs, a synthetic prediction, and the served frontend page.
+Docker image builds for pull requests. Connect the Render services to this
+GitHub repository; Render builds the API and UI directly from `Dockerfile` and
+`frontend/Dockerfile`. `.github/workflows/deploy.yml` triggers their Render
+deploy hooks on pushes to `main`, waits for API readiness at `/health`, then
+checks the API docs, a synthetic prediction, and the served frontend page.
 
 Before enabling deployment, configure the following in the repository's
 **Settings → Secrets and variables → Actions**:
@@ -466,25 +467,22 @@ Before enabling deployment, configure the following in the repository's
 | `RENDER_API_URL` | Variable | Public API base URL, without a trailing slash or `/api` suffix |
 | `RENDER_UI_URL` | Variable | Public frontend base URL |
 
-The workflow uses the automatically provided `GITHUB_TOKEN` to publish to
-GHCR. The Render Blueprint in `render.yaml` expects image-backed services named
-`financial-exclusion-api` and `financial-exclusion-ui`, with a Render registry
-credential named `financial-exclusion-ghcr`. For private GHCR packages,
-configure that credential in Render with a GitHub token that has
-`read:packages`. The `creds` references in `render.yaml` assume that credential
-exists; if the GHCR packages are public, remove both `creds` blocks before
-syncing the Blueprint. If your existing Render services use different names,
-update both service names and the API service reference in `render.yaml` to
-match them. The Render UI service obtains the API's private-network host and
-port through the Blueprint reference, and Nginx forwards `/api/*` to it.
+In Render, connect the Blueprint to this GitHub repository and deploy the
+`main` branch. The Blueprint defines Docker-based services named
+`financial-exclusion-api` and `financial-exclusion-ui`; it needs no GHCR
+packages or registry credentials. Render builds the UI against the API's public
+`onrender.com` URL, which also works with free web services that cannot receive
+private-network traffic. If you change the API service name, update
+`API_UPSTREAM` in `render.yaml` to match its public URL.
 
 The model file is deliberately excluded from Git and Docker build contexts.
 The API service must have the trusted
 `financial_exclusion_pipeline.joblib` file available at
-`/app/artifacts/financial_exclusion_pipeline.joblib` at runtime (for example,
-on an attached Render disk). A deployment without this file remains unhealthy,
-and the workflow fails at the `/health` readiness check. Do not put the model,
-deploy hook URLs, or registry credentials in the repository.
+`/app/artifacts/financial_exclusion_pipeline.joblib` at runtime. The Render
+free plan does not support persistent disks, so provide the artifact through a
+separate secure runtime source before deploying; otherwise the API remains
+unhealthy and the workflow fails at `/health`. Do not put the model or deploy
+hook URLs in the repository.
 
 The deployment workflow also performs a smoke prediction using a synthetic
 record. This confirms the live API and UI respond; it does not validate model

@@ -1,28 +1,23 @@
 services:
   - type: web
     name: financial-exclusion-api
-    runtime: image
+    runtime: docker
     plan: free
-    image:
-      url: ghcr.io/assumptamw/financial-exclusion-capstone-api:main
-      creds:
-        fromRegistryCreds:
-          name: financial-exclusion-ghcr
+    branch: main
+    autoDeployTrigger: "off"
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     healthCheckPath: /health
 
   - type: web
     name: financial-exclusion-ui
-    runtime: image
+    runtime: docker
     plan: free
-    image:
-      url: ghcr.io/assumptamw/financial-exclusion-capstone-frontend:main
-      creds:
-        fromRegistryCreds:
-          name: financial-exclusion-ghcr
+    branch: main
+    autoDeployTrigger: "off"
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: .
     healthCheckPath: /
     envVars:
       - key: API_UPSTREAM
-        fromService:
-          type: web
-          name: financial-exclusion-api
-          property: hostport
+        value: https://financial-exclusion-api.onrender.com
