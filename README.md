@@ -448,48 +448,6 @@ deployment: authentication, TLS, rate limiting, privacy assessment and data
 governance remain necessary before external use. Predictions are estimates,
 not definitive individual assessments.
 
-## CI/CD and Render deployment
-
-`.github/workflows/ci.yml` runs Ruff, the Python test suite, and API/frontend
-Docker image builds for pull requests. `.github/workflows/deploy.yml` builds
-and pushes the API and frontend images to GHCR on pushes to `main`, triggers
-their Render deploy hooks, waits for API readiness at `/health`, then checks
-the API docs, a synthetic prediction, and the served frontend page.
-
-Before enabling deployment, configure the following in the repository's
-**Settings → Secrets and variables → Actions**:
-
-| Name | Type | Value |
-| --- | --- | --- |
-| `RENDER_API_DEPLOY_HOOK_URL` | Secret | Deploy hook URL for the API Render service |
-| `RENDER_UI_DEPLOY_HOOK_URL` | Secret | Deploy hook URL for the frontend Render service |
-| `RENDER_API_URL` | Variable | Public API base URL, without a trailing slash or `/api` suffix |
-| `RENDER_UI_URL` | Variable | Public frontend base URL |
-
-The workflow uses the automatically provided `GITHUB_TOKEN` to publish to
-GHCR. The Render Blueprint in `render.yaml` expects image-backed services named
-`financial-exclusion-api` and `financial-exclusion-ui`, with a Render registry
-credential named `financial-exclusion-ghcr`. For private GHCR packages,
-configure that credential in Render with a GitHub token that has
-`read:packages`. The `creds` references in `render.yaml` assume that credential
-exists; if the GHCR packages are public, remove both `creds` blocks before
-syncing the Blueprint. If your existing Render services use different names,
-update both service names and the API service reference in `render.yaml` to
-match them. The Render UI service obtains the API's private-network host and
-port through the Blueprint reference, and Nginx forwards `/api/*` to it.
-
-The model file is deliberately excluded from Git and Docker build contexts.
-The API service must have the trusted
-`financial_exclusion_pipeline.joblib` file available at
-`/app/artifacts/financial_exclusion_pipeline.joblib` at runtime (for example,
-on an attached Render disk). A deployment without this file remains unhealthy,
-and the workflow fails at the `/health` readiness check. Do not put the model,
-deploy hook URLs, or registry credentials in the repository.
-
-The deployment workflow also performs a smoke prediction using a synthetic
-record. This confirms the live API and UI respond; it does not validate model
-quality or produce a nationally representative result.
-
 ## Project structure
 
 - `src/data/`: workbook inspection, extraction, preparation, preprocessing and EDA.
