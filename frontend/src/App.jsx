@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { predict } from './api.js';
-import { MISSING, prepareRequest, sections } from './fields.js';
+import { getFieldLabel, MISSING, prepareRequest, sections } from './fields.js';
 
 function Mark() {
   return (
@@ -64,32 +64,46 @@ function ExplanationSection({ explanation }) {
     );
   }
 
+  const contributors = Array.isArray(explanation.contributors)
+    ? explanation.contributors
+      .filter((contrib) => Number.isFinite(Number(contrib.shap_value)))
+      .sort((a, b) => Math.abs(Number(b.shap_value)) - Math.abs(Number(a.shap_value)))
+    : [];
+
   return (
     <div className="explanation-section">
       <h3>Understanding your prediction</h3>
       <p className="explanation-intro">
-        The most influential characteristics contributing to this prediction are shown below. 
-        Positive contributions push the prediction towards "Excluded"; negative contributions push towards "Included".
+        Characteristics are ranked by the magnitude of their contribution. Each label shows whether it moved the prediction towards "Excluded" or "Included".
       </p>
-      {explanation.contributors && explanation.contributors.length > 0 ? (
-        <div className="contributors-list">
-          {explanation.contributors.map((contrib, idx) => (
-            <div key={idx} className="contributor-item">
-              <div className="contributor-header">
-                <span className="contributor-name">{contrib.label}</span>
-                <span className={`contributor-direction ${contrib.direction.replace(' ', '-')}`}>
-                  {contrib.direction}
-                </span>
-              </div>
-              <div className="contributor-bar">
-                <div
-                  className={`contributor-bar-fill ${contrib.shap_value > 0 ? 'positive' : 'negative'}`}
-                  style={{ width: `${Math.min(100, Math.abs(contrib.shap_value) * 50)}%` }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
+      {contributors.length > 0 ? (
+        <ol className="contributors-list" aria-label="Characteristics ranked by contribution">
+          {contributors.map((contrib, idx) => {
+            const variable = contrib.variable;
+            const fieldLabel = variable ? getFieldLabel(variable) : null;
+            const name = fieldLabel && fieldLabel !== variable
+              ? `${fieldLabel} (${variable})`
+              : (contrib.label || variable || 'Unspecified characteristic');
+            const shapValue = Number(contrib.shap_value);
+            const direction = shapValue > 0 ? 'towards excluded' : 'towards included';
+            return (
+              <li key={idx} className="contributor-item">
+                <div className="contributor-header">
+                  <span className="contributor-name"><span className="contributor-rank">{idx + 1}.</span> {name}</span>
+                  <span className={`contributor-direction ${direction.replace(' ', '-')}`}>
+                    {direction}
+                  </span>
+                </div>
+                <div className="contributor-bar">
+                  <div
+                    className={`contributor-bar-fill ${shapValue > 0 ? 'positive' : 'negative'}`}
+                    style={{ width: `${Math.min(100, Math.abs(shapValue) * 50)}%` }}
+                  />
+                </div>
+              </li>
+            );
+          })}
+        </ol>
       ) : (
         <p className="explanation-note">No significant contributors identified.</p>
       )}
